@@ -62,10 +62,14 @@ class Threat(db.Model):
         self.dread_score = round((self.damage + self.reproducibility +
                                   self.exploitability + self.affected_users +
                                   self.discoverability) / 5, 2)
-        if self.dread_score >= 4: self.risk_level = 'Critical'
-        elif self.dread_score >= 3: self.risk_level = 'High'
-        elif self.dread_score >= 2: self.risk_level = 'Medium'
-        else: self.risk_level = 'Low'
+        if self.dread_score >= 4:
+            self.risk_level = 'Critical'
+        elif self.dread_score >= 3:
+            self.risk_level = 'High'
+        elif self.dread_score >= 2:
+            self.risk_level = 'Medium'
+        else:
+            self.risk_level = 'Low'
 
 class DFDData(db.Model):
     __tablename__ = 'dfd_data'
