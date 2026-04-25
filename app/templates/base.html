@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threat Modeling Toolkit</title>
+  <!-- CoreUI CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/coreui.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
+    <div class="sidebar-brand d-none d-md-flex">
+      <span class="sidebar-brand-full">Threat Toolkit</span>
+    </div>
+    <ul class="sidebar-nav" data-coreui="navigation">
+      {% if endpoint_exists('dashboard.index') %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.index') }}"><i class="nav-icon cil-speedometer"></i> Dashboard</a></li>
+      {% else %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="nav-icon cil-speedometer"></i> Dashboard</a></li>
+      {% endif %}
+
+      {% if endpoint_exists('threats.list_models') %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('threats.list_models') }}"><i class="nav-icon cil-shield-alt"></i> Threat Models</a></li>
+      {% endif %}
+
+      {% if current_user.is_authenticated %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="nav-icon cil-user"></i> My Profile</a></li>
+      {% if current_user.role == 'admin' %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.admin_users') }}"><i class="nav-icon cil-people"></i> Manage Users</a></li>
+      {% endif %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}"><i class="nav-icon cil-account-logout"></i> Logout</a></li>
+      {% else %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}"><i class="nav-icon cil-account-logout"></i> Login</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}"><i class="nav-icon cil-user"></i> Register</a></li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="wrapper d-flex flex-column min-vh-100 bg-light">
+    <header class="header header-sticky mb-4">
+      <div class="container-fluid">
+        <button class="header-toggler px-md-0 me-md-3" type="button" id="sidebar-toggle-btn">
+          <span class="cil-menu"></span>
+        </button>
+        <a class="header-brand d-md-none" href="/">Threat Toolkit</a>
+      </div>
+    </header>
+    <div class="body flex-grow-1 px-3">
+      <div class="container-lg">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  <!-- CoreUI JS -->
+  <script src="{{ url_for('static', filename='js/coreui.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <!-- Chart.js (for dashboard later) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ model.name }}</h2>
+<p>{{ model.description }}</p>
+<p><strong>Methodology:</strong> {{ model.methodology }} | <strong>Status:</strong> {{ model.status }}</p>
+<a href="{{ url_for('threats.add_threat', model_id=model.id) }}" class="btn btn-primary mb-3">Add Threat</a>
+
+<h3>Threats ({{ model.threats|length }})</h3>
+{% if model.threats %}
+<table class="table table-striped">
+  <thead>
+    <tr><th>#</th><th>Title</th><th>STRIDE</th><th>DREAD</th><th>Risk</th><th>Status</th></tr>
+  </thead>
+  <tbody>
+    {% for t in model.threats %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.stride_category }}</td>
+      <td>{{ t.dread_score }}</td>
+      <td><span class="badge bg-{{ 'danger' if t.risk_level == 'Critical' else 'warning' if t.risk_level == 'High' else 'info' if t.risk_level == 'Medium' else 'success' }}">{{ t.risk_level }}</span></td>
+      <td>{{ t.status }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No threats added yet.</p>
+{% endif %}
+{% endblock %}

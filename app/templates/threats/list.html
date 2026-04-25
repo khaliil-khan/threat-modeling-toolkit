@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>My Threat Models</h2>
+<a href="{{ url_for('threats.create_model') }}" class="btn btn-primary mb-3">Create New Threat Model</a>
+{% if models %}
+<div class="row">
+  {% for m in models %}
+  <div class="col-md-6 mb-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ m.name }}</h5>
+        <p class="card-text">{{ m.description or 'No description' }}</p>
+        <p><span class="badge bg-info">{{ m.methodology }}</span> <span class="badge bg-secondary">{{ m.status }}</span></p>
+        <a href="{{ url_for('threats.model_detail', model_id=m.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+        <form action="{{ url_for('threats.delete_model', model_id=m.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this model and all its threats?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p>No threat models yet. Create one to get started.</p>
+{% endif %}
+{% endblock %}

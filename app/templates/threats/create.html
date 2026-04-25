@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Create Threat Model</h2>
+<div class="card">
+  <div class="card-body">
+    <form method="POST">
+      {{ form.hidden_tag() }}
+      <div class="mb-3">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+      </div>
+      <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control", rows=4) }}
+      </div>
+      <div class="mb-3">
+        {{ form.methodology.label(class="form-label") }}
+        {{ form.methodology(class="form-select") }}
+      </div>
+      {{ form.submit(class="btn btn-success") }}
+    </form>
+  </div>
+</div>
+{% endblock %}
