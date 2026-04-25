@@ -63,3 +63,17 @@ def api_threats_data():
             'risk': t.risk_level
         })
     return jsonify(data)
+
+@dashboard_bp.route('/api/recent-threats')
+@login_required
+def api_recent_threats():
+    """Return top 10 highest DREAD score threats for the recent table"""
+    threats = Threat.query.join(ThreatModel).filter(ThreatModel.user_id == current_user.id).order_by(Threat.dread_score.desc()).limit(10).all()
+    return jsonify({
+        'threats': [{
+            'title': t.title,
+            'stride_category': t.stride_category,
+            'dread_score': t.dread_score,
+            'risk_level': t.risk_level
+        } for t in threats]
+    })
