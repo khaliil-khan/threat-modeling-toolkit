@@ -1,89 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - Threat Modeling Toolkit{% endblock %}
+{% block title %}Dashboard - Threat Toolkit{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">Security Dashboard</h1>
-    
-    <!-- Statistics Cards Row -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">Threat Models</h5>
-                    <h2 class="display-4">{{ total_models }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">Total Threats</h5>
-                    <h2 class="display-4">{{ total_threats }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Critical Risks</h5>
-                    <h2 class="display-4">{{ critical }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Open Threats</h5>
-                    <h2 class="display-4">{{ open_threats }}</h2>
-                </div>
+<h1 class="mb-4">Security Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Threat Models</h5>
+                <h2 class="display-4">{{ total_models }}</h2>
             </div>
         </div>
     </div>
-
-    <!-- Charts Row -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Threats by STRIDE Category</h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="strideChart" width="400" height="400"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5>Risk Matrix Heatmap (5x5)</h5>
-                    <small>X = Exploitability, Y = Damage | Color: Risk Level</small>
-                </div>
-                <div class="card-body text-center">
-                    <canvas id="riskMatrixCanvas" width="350" height="350"></canvas>
-                </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total Threats</h5>
+                <h2 class="display-4">{{ total_threats }}</h2>
             </div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Critical Risks</h5>
+                <h2 class="display-4">{{ critical }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Open Threats</h5>
+                <h2 class="display-4">{{ open_threats }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
 
-    <!-- Recent Threats Table (Optional) -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5>Recent High Risk Threats</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr><th>Title</th><th>STRIDE</th><th>DREAD</th><th>Risk</th></tr>
-                        </thead>
-                        <tbody id="recent-threats-body">
-                            <tr><td colspan="4" class="text-center">Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Threats by STRIDE Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="strideChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Risk Matrix (5x5)</h5>
+                <small>X = Exploitability (Likelihood), Y = Damage (Impact)</small>
+            </div>
+            <div class="card-body text-center">
+                <canvas id="riskMatrixCanvas" width="350" height="350"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent High Risk Threats</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr><th>Title</th><th>STRIDE Category</th><th>DREAD Score</th><th>Risk Level</th></tr>
+                    </thead>
+                    <tbody id="recent-threats-body">
+                        <tr><td colspan="4" class="text-center">No threats found</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -95,48 +90,46 @@
 <script src="{{ url_for('static', filename='js/risk_matrix.js') }}"></script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script>
-    // Pass server-side data to JavaScript
     const strideData = {{ stride_counts | tojson }};
     const riskPoints = {{ risk_points | tojson }};
-    
-    // Initialize charts after page loads
+
     document.addEventListener('DOMContentLoaded', function() {
         initStrideChart(strideData);
         drawRiskMatrix('riskMatrixCanvas', riskPoints);
         loadRecentThreats();
     });
-    
+
     async function loadRecentThreats() {
-        // You can implement an AJAX call to fetch recent threats
-        // For now, placeholder - you can also render from server
-        const resp = await fetch('/dashboard/api/recent-threats');
-        const data = await resp.json();
-        const tbody = document.getElementById('recent-threats-body');
-        if(data.threats && data.threats.length) {
-            tbody.innerHTML = data.threats.map(t => `
-                <tr>
-                    <td>${escapeHtml(t.title)}</td>
-                    <td>${escapeHtml(t.stride_category)}</td>
-                    <td>${t.dread_score}</td>
-                    <td><span class="badge bg-${getRiskBadge(t.risk_level)}">${t.risk_level}</span></td>
-                </tr>
-            `).join('');
-        } else {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No threats found</td></tr>';
-        }
+        try {
+            const resp = await fetch('/dashboard/api/recent-threats');
+            const data = await resp.json();
+            const tbody = document.getElementById('recent-threats-body');
+            if (data.threats && data.threats.length) {
+                tbody.innerHTML = data.threats.map(t => `
+                    <tr>
+                        <td>${escapeHtml(t.title)}</td>
+                        <td>${escapeHtml(t.stride_category)}</td>
+                        <td>${t.dread_score}</td>
+                        <td><span class="badge bg-${getRiskBadge(t.risk_level)}">${t.risk_level}</span></td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">No threats found</td></tr>';
+            }
+        } catch(e) { console.error(e); }
     }
-    
+
     function getRiskBadge(level) {
         const map = {'Critical':'danger','High':'warning','Medium':'info','Low':'secondary'};
         return map[level] || 'secondary';
     }
-    
+
     function escapeHtml(str) {
-        if(!str) return '';
+        if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
             return m;
         });
     }
