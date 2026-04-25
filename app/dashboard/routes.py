@@ -1,29 +1,22 @@
 from flask import render_template, jsonify
-from flask_login import login_required, current_user
 from . import dashboard_bp
 from ..models import ThreatModel, Threat
 
 @dashboard_bp.route('/')
-@login_required
 def index():
     """Main dashboard page with charts"""
-    # Basic stats
-    total_models = ThreatModel.query.filter_by(user_id=current_user.id).count()
-    
-    # Get all threats belonging to current user's models
-    all_threats = Threat.query.join(ThreatModel).filter(ThreatModel.user_id == current_user.id).all()
+    all_threats = Threat.query.all()
+    total_models = ThreatModel.query.count()
     total_threats = len(all_threats)
     critical = sum(1 for t in all_threats if t.risk_level == 'Critical')
     high = sum(1 for t in all_threats if t.risk_level == 'High')
     open_threats = sum(1 for t in all_threats if t.status == 'Open')
-    
-    # STRIDE category counts for chart
+
     stride_counts = {}
     for t in all_threats:
         cat = t.stride_category
         stride_counts[cat] = stride_counts.get(cat, 0) + 1
-    
-    # Prepare risk matrix data points (x = exploitability, y = damage)
+
     risk_points = [
         {
             'x': t.exploitability,
@@ -34,7 +27,7 @@ def index():
         }
         for t in all_threats
     ]
-    
+
     return render_template('dashboard/index.html',
                          total_models=total_models,
                          total_threats=total_threats,
@@ -45,10 +38,8 @@ def index():
                          risk_points=risk_points)
 
 @dashboard_bp.route('/api/threats-data')
-@login_required
 def api_threats_data():
-    """JSON endpoint for AJAX chart updates (optional)"""
-    all_threats = Threat.query.join(ThreatModel).filter(ThreatModel.user_id == current_user.id).all()
+    all_threats = Threat.query.all()
     data = {
         'stride_counts': {},
         'risk_points': []
@@ -65,10 +56,8 @@ def api_threats_data():
     return jsonify(data)
 
 @dashboard_bp.route('/api/recent-threats')
-@login_required
 def api_recent_threats():
-    """Return top 10 highest DREAD score threats for the recent table"""
-    threats = Threat.query.join(ThreatModel).filter(ThreatModel.user_id == current_user.id).order_by(Threat.dread_score.desc()).limit(10).all()
+    threats = Threat.query.order_by(Threat.dread_score.desc()).limit(10).all()
     return jsonify({
         'threats': [{
             'title': t.title,
