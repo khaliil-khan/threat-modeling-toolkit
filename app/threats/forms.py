@@ -11,6 +11,14 @@ STRIDE_CHOICES = [
     ('Elevation of Privilege', 'Elevation of Privilege — Gaining unauthorized access'),
 ]
 
+PASTA_CHOICES = [
+    ('Threat Agent', 'Threat Agent — External actors attempting attacks'),
+    ('Attack Vector', 'Attack Vector — Methods used to reach assets'),
+    ('Vulnerable Asset', 'Vulnerable Asset — Systems with security weaknesses'),
+    ('Technical Impact', 'Technical Impact — Consequences from exploitation'),
+    ('Business Impact', 'Business Impact — Damage to business objectives'),
+]
+
 class ThreatModelForm(FlaskForm):
     name = StringField('Model Name', validators=[DataRequired()])
     description = TextAreaField('Description')
@@ -20,7 +28,8 @@ class ThreatModelForm(FlaskForm):
 class ThreatForm(FlaskForm):
     title = StringField('Threat Title', validators=[DataRequired()])
     description = TextAreaField('Description')
-    stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES)
+    stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES, render_kw={'class': 'form-select'})
+    pasta_category = SelectField('PASTA Category', choices=PASTA_CHOICES, render_kw={'class': 'form-select'})
     # DREAD sliders (1-5)
     damage = IntegerRangeField('Damage', validators=[NumberRange(1, 5)], default=1)
     reproducibility = IntegerRangeField('Reproducibility', validators=[NumberRange(1, 5)], default=1)

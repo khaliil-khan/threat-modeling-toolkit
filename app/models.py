@@ -46,6 +46,7 @@ class Threat(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     stride_category = db.Column(db.String(50))
+    pasta_category = db.Column(db.String(50))
     damage = db.Column(db.Integer, default=1)
     reproducibility = db.Column(db.Integer, default=1)
     exploitability = db.Column(db.Integer, default=1)

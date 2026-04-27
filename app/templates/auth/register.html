@@ -1,51 +1,85 @@
 {% extends "base.html" %}
+{% block title %}Create Account - Threat Toolkit{% endblock %}
 {% block content %}
 <div class="row justify-content-center align-items-center auth-page-shell">
   <div class="col-md-8 col-lg-6 col-xl-5">
-    <div class="card border-0 shadow-lg">
+    <div class="card border-0 shadow-lg reveal-item">
       <div class="card-body p-5">
-        <div class="text-center mb-4">
+        <div class="text-center mb-5">
+          <div class="mb-3">
+            <i class="cil-user-plus fs-1" style="color: #2f81f7;"></i>
+          </div>
           <h2 class="fw-bold mb-1">Create Account</h2>
           <p class="text-medium-emphasis mb-0">Get started with secure threat modeling workflows.</p>
         </div>
+
         <form method="POST">
           {{ form.hidden_tag() }}
-          <div class="mb-3">
-            {{ form.username.label(class="form-label") }}
-            {{ form.username(class="form-control form-control-lg", placeholder="Choose a username") }}
-            {% for error in form.username.errors %}
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-2">{{ error }}</span>
-            {% endfor %}
+
+          <div class="mb-4">
+            {{ form.username.label(class="form-label fw-semibold") }}
+            {{ form.username(class="form-control form-control-lg", placeholder="Choose a username", autocomplete="username") }}
+            {% if form.username.errors %}
+              <small class="text-danger d-block mt-2">
+                {% for error in form.username.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+              </small>
+            {% endif %}
           </div>
-          <div class="mb-3">
-            {{ form.email.label(class="form-label") }}
-            {{ form.email(class="form-control form-control-lg", placeholder="you@example.com") }}
-            {% for error in form.email.errors %}
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-2">{{ error }}</span>
-            {% endfor %}
+
+          <div class="mb-4">
+            {{ form.email.label(class="form-label fw-semibold") }}
+            {{ form.email(class="form-control form-control-lg", placeholder="you@example.com", autocomplete="email") }}
+            {% if form.email.errors %}
+              <small class="text-danger d-block mt-2">
+                {% for error in form.email.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+              </small>
+            {% endif %}
           </div>
-          <div class="mb-3">
-            {{ form.password.label(class="form-label") }}
-            {{ form.password(class="form-control form-control-lg", placeholder="Create a strong password") }}
-            <div class="form-text">Use at least 8 characters with uppercase, lowercase, and a number.</div>
-            {% for error in form.password.errors %}
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-2">{{ error }}</span>
-            {% endfor %}
+
+          <div class="mb-4">
+            {{ form.password.label(class="form-label fw-semibold") }}
+            {{ form.password(class="form-control form-control-lg", placeholder="Create a strong password", autocomplete="new-password") }}
+            <small class="text-medium-emphasis d-block mt-2">
+              <i class="cil-info me-1"></i>Use at least 8 characters with uppercase, lowercase, and a number.
+            </small>
+            {% if form.password.errors %}
+              <small class="text-danger d-block mt-2">
+                {% for error in form.password.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+              </small>
+            {% endif %}
           </div>
-          <div class="mb-3">
-            {{ form.confirm.label(class="form-label") }}
-            {{ form.confirm(class="form-control form-control-lg", placeholder="Re-enter password") }}
-            {% for error in form.confirm.errors %}
-              <span class="badge bg-danger-subtle text-danger border border-danger-subtle mt-2">{{ error }}</span>
-            {% endfor %}
+
+          <div class="mb-4">
+            {{ form.confirm.label(class="form-label fw-semibold") }}
+            {{ form.confirm(class="form-control form-control-lg", placeholder="Re-enter password", autocomplete="new-password") }}
+            {% if form.confirm.errors %}
+              <small class="text-danger d-block mt-2">
+                {% for error in form.confirm.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+              </small>
+            {% endif %}
           </div>
-          <button type="submit" class="btn btn-success btn-lg w-100">
+
+          <button type="submit" class="btn btn-success btn-lg w-100 fw-semibold">
             <i class="cil-user-plus me-2"></i>{{ form.submit.label.text }}
           </button>
         </form>
-        <p class="mt-4 mb-0 text-center">Already have an account? <a href="{{ url_for('auth.login') }}" class="fw-semibold">Login</a></p>
+
+        <hr class="my-4">
+
+        <p class="text-center mb-0 text-medium-emphasis">
+          Already have an account?
+          <a href="{{ url_for('auth.login') }}" class="fw-semibold link-primary">
+            Sign in
+          </a>
+        </p>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
 {% endblock %}

@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% block title %}My Threat Models - Threat Toolkit{% endblock %}
 {% block content %}
-<section class="rounded-4 p-4 p-md-5 mb-4 text-white hero-gradient-dark">
+<section class="rounded-4 p-4 p-md-5 mb-5 text-white hero-gradient-dark reveal-item">
   <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
     <div>
-      <h1 class="mb-2 fw-bold">My Threat Models</h1>
-      <p class="mb-0 text-white-50">Track, review, and improve your security posture across all models.</p>
+      <h1 class="mb-2 fw-bold fs-2" style="letter-spacing: -0.5px;">My Threat Models</h1>
+      <p class="mb-0 text-white-50">Create comprehensive threat models using STRIDE or PASTA methodologies with DREAD-based risk assessment.</p>
     </div>
     <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary btn-lg shadow">
       <i class="cil-plus me-2"></i>Create New Model
@@ -16,19 +17,26 @@
 <div class="row g-4">
   {% for m in models %}
   <div class="col-md-6 col-xl-4">
-    <div class="card border-0 shadow-sm h-100 threat-model-card">
+    <div class="card border-0 shadow-sm h-100 threat-model-card reveal-item" style="--reveal-delay: {{ loop.index0 * 50 }}ms;">
       <div class="card-body d-flex flex-column p-4">
-        <h5 class="card-title mb-3 fw-semibold">{{ m.name }}</h5>
-        <p class="card-text text-medium-emphasis mb-3">{{ m.description or 'No description available yet.' }}</p>
-        <div class="mb-4">
-          <span class="badge rounded-pill bg-info me-2">{{ m.methodology }}</span>
-          <span class="badge rounded-pill bg-secondary">{{ m.status }}</span>
+        <h5 class="card-title mb-2">{{ m.name }}</h5>
+        <p class="card-text text-medium-emphasis mb-3 flex-grow-1">{{ m.description or 'No description available yet.' }}</p>
+        <div class="mb-4 d-flex flex-wrap gap-2">
+          <span class="methodology-badge methodology-{% if m.methodology == 'PASTA' %}pasta{% else %}stride{% endif %}">
+            <i class="cil-layers me-1"></i>{{ m.methodology }}
+          </span>
+          <span class="badge bg-secondary"><i class="cil-checkmark-circle me-1"></i>{{ m.status }}</span>
+          <span class="badge bg-primary"><i class="cil-shield-alt me-1"></i>{{ m.threats|length }} Threats</span>
         </div>
-        <div class="mt-auto d-flex gap-2">
-          <a href="{{ url_for('threats.model_detail', model_id=m.id) }}" class="btn btn-outline-primary flex-grow-1">View</a>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('threats.model_detail', model_id=m.id) }}" class="btn btn-outline-primary flex-grow-1">
+            <i class="cil-arrow-right me-1"></i>View
+          </a>
           <form action="{{ url_for('threats.delete_model', model_id=m.id) }}" method="POST" class="flex-grow-1" onsubmit="return confirm('Delete this model and all its threats?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline-danger w-100">Delete</button>
+            <button type="submit" class="btn btn-outline-danger w-100">
+              <i class="cil-trash me-1"></i>Delete
+            </button>
           </form>
         </div>
       </div>
@@ -37,12 +45,74 @@
   {% endfor %}
 </div>
 {% else %}
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm reveal-item">
   <div class="card-body py-5 text-center">
-    <h4 class="mb-2">No threat models yet</h4>
-    <p class="text-medium-emphasis mb-4">Create your first model to start threat analysis.</p>
-    <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary btn-lg"><i class="cil-plus me-2"></i>Create New Model</a>
+    <i class="cil-inbox fs-1 d-block mb-3 text-medium-emphasis"></i>
+    <h4 class="fw-bold mb-2">No threat models yet</h4>
+    <p class="text-medium-emphasis mb-4">Create your first model to start threat analysis with STRIDE, PASTA, and DREAD methodologies.</p>
+    <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary btn-lg">
+      <i class="cil-plus me-2"></i>Create New Model
+    </a>
   </div>
 </div>
 {% endif %}
+
+<!-- Information Section -->
+<div class="row g-4 mt-5">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="cil-info me-2"></i>STRIDE & PASTA</h5>
+      </div>
+      <div class="card-body p-4">
+        <div class="mb-3">
+          <div class="threat-category-label mb-2">STRIDE</div>
+          <p class="text-soft small">Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege — a threat categorization model.</p>
+        </div>
+        <div>
+          <div class="threat-category-label mb-2">PASTA</div>
+          <p class="text-soft small">Process for Attack Simulation and Threat Analysis — focuses on Threat Agent, Attack Vector, Vulnerable Asset, Technical Impact, and Business Impact.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="cil-chart-line me-2"></i>DREAD Scoring</h5>
+      </div>
+      <div class="card-body p-4">
+        <p class="text-soft small mb-3">DREAD is a risk assessment framework with five factors:</p>
+        <div class="dread-score-display">
+          <div class="dread-factor">
+            <span class="dread-factor-label">Damage</span>
+            <small class="text-soft">Extent of damage if exploited</small>
+          </div>
+          <div class="dread-factor">
+            <span class="dread-factor-label">Reproducibility</span>
+            <small class="text-soft">Ease of reproducing the attack</small>
+          </div>
+          <div class="dread-factor">
+            <span class="dread-factor-label">Exploitability</span>
+            <small class="text-soft">Difficulty to exploit</small>
+          </div>
+          <div class="dread-factor">
+            <span class="dread-factor-label">Affected Users</span>
+            <small class="text-soft">Scope of potential victims</small>
+          </div>
+          <div class="dread-factor">
+            <span class="dread-factor-label">Discoverability</span>
+            <small class="text-soft">Likelihood of discovery</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
 {% endblock %}
