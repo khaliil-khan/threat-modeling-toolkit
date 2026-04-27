@@ -4,6 +4,8 @@
 <p>{{ model.description }}</p>
 <p><strong>Methodology:</strong> {{ model.methodology }} | <strong>Status:</strong> {{ model.status }}</p>
 <a href="{{ url_for('threats.add_threat', model_id=model.id) }}" class="btn btn-primary mb-3">Add Threat</a>
+<a href="{{ url_for('dfd.edit_dfd', model_id=model.id) }}" class="btn btn-secondary mb-3">Open DFD Editor</a>
+<a href="{{ url_for('reports.generate_pdf', model_id=model.id) }}" class="btn btn-outline-primary mb-3">Download PDF Report</a>
 
 <h3>Threats ({{ model.threats|length }})</h3>
 {% if model.threats %}
