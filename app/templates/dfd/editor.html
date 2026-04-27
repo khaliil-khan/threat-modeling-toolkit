@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>DFD Builder - {{ model.name }}</h2>
+<div class="mb-3">
+  <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-secondary">Back to Model</a>
+  <button onclick="addElement('process')" class="btn btn-outline-primary">Add Process</button>
+  <button onclick="addElement('datastore')" class="btn btn-outline-primary">Add Data Store</button>
+  <button onclick="addElement('external')" class="btn btn-outline-primary">Add External Entity</button>
+  <button onclick="addElement('flow')" class="btn btn-outline-primary">Add Data Flow</button>
+  <button onclick="saveCanvas()" class="btn btn-success">💾 Save DFD</button>
+</div>
+<canvas id="dfdCanvas" width="800" height="500" class="border"></canvas>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dfd_editor.js') }}"></script>
+<script>
+  window.dfdSaveUrl = "{{ url_for('dfd.save_dfd', model_id=model.id) }}";
+  let savedJSON = {{ (model.dfd_data.canvas_json if model.dfd_data else '{}') | tojson }};
+  if (savedJSON && savedJSON !== '{}') {
+    elements = JSON.parse(savedJSON);
+    drawAll();
+  }
+</script>
+{% endblock %}

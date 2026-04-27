@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h1>Dashboard</h1>
+  
+  <div class="row my-4">
+    <div class="col-md-3">
+      <div class="card text-white bg-primary mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Models</h5>
+          <p class="card-text display-4">{{ total_models }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Threats</h5>
+          <p class="card-text display-4">{{ total_threats }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-danger mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Critical</h5>
+          <p class="card-text display-4">{{ critical }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-warning mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Open Threats</h5>
+          <p class="card-text display-4">{{ open_threats }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a href="{{ url_for('threats.list_models') }}" class="btn btn-outline-primary">
+    Go to Threat Models
+  </a>
+</div>
+{% endblock %}
