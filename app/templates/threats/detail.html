@@ -1,30 +1,56 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ model.name }}</h2>
-<p>{{ model.description }}</p>
-<p><strong>Methodology:</strong> {{ model.methodology }} | <strong>Status:</strong> {{ model.status }}</p>
-<a href="{{ url_for('threats.add_threat', model_id=model.id) }}" class="btn btn-primary mb-3">Add Threat</a>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-4 p-md-5">
+    <h2 class="fw-bold mb-2">{{ model.name }}</h2>
+    <p class="text-medium-emphasis mb-3">{{ model.description or 'No description provided for this threat model.' }}</p>
+    <div class="d-flex flex-wrap gap-2">
+      <span class="badge rounded-pill bg-info px-3 py-2">Methodology: {{ model.methodology }}</span>
+      <span class="badge rounded-pill bg-secondary px-3 py-2">Status: {{ model.status }}</span>
+      <span class="badge rounded-pill bg-primary px-3 py-2">Threat Count: {{ model.threats|length }}</span>
+    </div>
+  </div>
+</div>
 
-<h3>Threats ({{ model.threats|length }})</h3>
-{% if model.threats %}
-<table class="table table-striped">
-  <thead>
-    <tr><th>#</th><th>Title</th><th>STRIDE</th><th>DREAD</th><th>Risk</th><th>Status</th></tr>
-  </thead>
-  <tbody>
-    {% for t in model.threats %}
-    <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ t.title }}</td>
-      <td>{{ t.stride_category }}</td>
-      <td>{{ t.dread_score }}</td>
-      <td><span class="badge bg-{{ 'danger' if t.risk_level == 'Critical' else 'warning' if t.risk_level == 'High' else 'info' if t.risk_level == 'Medium' else 'success' }}">{{ t.risk_level }}</span></td>
-      <td>{{ t.status }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p>No threats added yet.</p>
-{% endif %}
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-body-tertiary">
+    <h4 class="mb-0">Threats</h4>
+  </div>
+  <div class="card-body p-0">
+    {% if model.threats %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>#</th><th>Title</th><th>STRIDE</th><th>DREAD</th><th>Risk</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for t in model.threats %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="fw-semibold">{{ t.title }}</td>
+            <td>{{ t.stride_category }}</td>
+            <td>{{ t.dread_score }}</td>
+            <td>
+              <span class="badge rounded-pill {{
+                'risk-critical' if t.risk_level == 'Critical'
+                else 'risk-high' if t.risk_level == 'High'
+                else 'risk-medium' if t.risk_level == 'Medium'
+                else 'risk-low'
+              }}">{{ t.risk_level }}</span>
+            </td>
+            <td>{{ t.status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-medium-emphasis">No threats added yet.</div>
+    {% endif %}
+  </div>
+</div>
+
+<a href="{{ url_for('threats.add_threat', model_id=model.id) }}" class="btn btn-primary btn-lg rounded-pill shadow position-fixed fab-action">
+  <i class="cil-plus me-2"></i>Add Threat
+</a>
 {% endblock %}

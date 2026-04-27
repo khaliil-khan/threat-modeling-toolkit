@@ -1,38 +1,44 @@
 {% extends "base.html" %}
+{% block title %}User Management - Threat Toolkit{% endblock %}
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header"><h4 class="mb-0">User Management</h4></div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped align-middle mb-0">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="5" class="text-center text-muted">No users found.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+<div class="py-2 py-md-3">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-3">
+    <div>
+      <h3 class="mb-1 fw-bold">User Management</h3>
+      <p class="mb-0 text-medium-emphasis">Monitor accounts, roles, and onboarding activity.</p>
+    </div>
+    <span class="chip-soft"><i class="cil-people me-1"></i>Total Users: {{ users|length }}</span>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 app-table">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>#{{ user.id }}</td>
+              <td class="fw-semibold">{{ user.username }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="chip-soft text-capitalize">{{ user.role }}</span></td>
+              <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">No users found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

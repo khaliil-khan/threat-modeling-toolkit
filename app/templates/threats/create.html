@@ -1,24 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Create Threat Model</h2>
-<div class="card">
-  <div class="card-body">
-    <form method="POST">
-      {{ form.hidden_tag() }}
-      <div class="mb-3">
-        {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control") }}
+<div class="py-3 py-md-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      <div class="card border-0 shadow-lg">
+        <div class="card-header bg-body-tertiary py-3">
+          <h3 class="mb-0 fw-bold">Create New Threat Model</h3>
+        </div>
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" class="vstack gap-3">
+            {{ form.hidden_tag() }}
+            <div>
+              {{ form.name.label(class="form-label fw-semibold") }}
+              {{ form.name(class="form-control form-control-lg input-gradient") }}
+            </div>
+            <div>
+              {{ form.description.label(class="form-label fw-semibold") }}
+              {{ form.description(class="form-control input-gradient", rows=4) }}
+            </div>
+            <div>
+              {{ form.methodology.label(class="form-label fw-semibold") }}
+              {{ form.methodology(class="form-select form-select-lg input-gradient") }}
+            </div>
+            <button type="submit" class="btn btn-success btn-lg mt-2">
+              <i class="cil-check-circle me-2"></i>{{ form.submit.label.text }}
+            </button>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        {{ form.description.label(class="form-label") }}
-        {{ form.description(class="form-control", rows=4) }}
-      </div>
-      <div class="mb-3">
-        {{ form.methodology.label(class="form-label") }}
-        {{ form.methodology(class="form-select") }}
-      </div>
-      {{ form.submit(class="btn btn-success") }}
-    </form>
+    </div>
   </div>
 </div>
 {% endblock %}

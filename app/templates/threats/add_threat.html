@@ -1,58 +1,94 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Add Threat to "{{ model.name }}"</h2>
-<div class="card">
-  <div class="card-body">
-    <form method="POST">
+<div class="py-3 py-md-4 rounded-4 panel-gradient-soft">
+  <div class="px-3 px-md-4">
+    <h2 class="fw-bold mb-4">Add Threat to "{{ model.name }}"</h2>
+
+    <form method="POST" class="vstack gap-4">
       {{ form.hidden_tag() }}
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          {{ form.title.label(class="form-label") }}
-          {{ form.title(class="form-control") }}
-        </div>
-        <div class="col-md-6 mb-3">
-          {{ form.stride_category.label(class="form-label") }}
-          {{ form.stride_category(class="form-select") }}
-        </div>
-      </div>
-      <div class="mb-3">
-        {{ form.description.label(class="form-label") }}
-        {{ form.description(class="form-control", rows=3) }}
-      </div>
-      <h5>DREAD Ratings (1-5)</h5>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          {{ form.damage.label(class="form-label") }}
-          {{ form.damage(class="form-range", min=1, max=5) }}
-        </div>
-        <div class="col-md-4 mb-3">
-          {{ form.reproducibility.label(class="form-label") }}
-          {{ form.reproducibility(class="form-range", min=1, max=5) }}
-        </div>
-        <div class="col-md-4 mb-3">
-          {{ form.exploitability.label(class="form-label") }}
-          {{ form.exploitability(class="form-range", min=1, max=5) }}
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-body-tertiary"><h5 class="mb-0">Threat Details</h5></div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.title.label(class="form-label fw-semibold") }}
+              {{ form.title(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.stride_category.label(class="form-label fw-semibold") }}
+              {{ form.stride_category(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.description.label(class="form-label fw-semibold") }}
+              {{ form.description(class="form-control", rows=3) }}
+            </div>
+          </div>
         </div>
       </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          {{ form.affected_users.label(class="form-label") }}
-          {{ form.affected_users(class="form-range", min=1, max=5) }}
-        </div>
-        <div class="col-md-4 mb-3">
-          {{ form.discoverability.label(class="form-label") }}
-          {{ form.discoverability(class="form-range", min=1, max=5) }}
-        </div>
-        <div class="col-md-4 mb-3">
-          {{ form.status.label(class="form-label") }}
-          {{ form.status(class="form-select") }}
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-body-tertiary"><h5 class="mb-0">DREAD Ratings</h5></div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between">
+                {{ form.damage.label(class="form-label fw-semibold") }}
+                <span class="badge bg-primary">{{ form.damage.data or 1 }}</span>
+              </div>
+              {{ form.damage(class="form-range", min=1, max=5) }}
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between">
+                {{ form.reproducibility.label(class="form-label fw-semibold") }}
+                <span class="badge bg-primary">{{ form.reproducibility.data or 1 }}</span>
+              </div>
+              {{ form.reproducibility(class="form-range", min=1, max=5) }}
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between">
+                {{ form.exploitability.label(class="form-label fw-semibold") }}
+                <span class="badge bg-primary">{{ form.exploitability.data or 1 }}</span>
+              </div>
+              {{ form.exploitability(class="form-range", min=1, max=5) }}
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between">
+                {{ form.affected_users.label(class="form-label fw-semibold") }}
+                <span class="badge bg-primary">{{ form.affected_users.data or 1 }}</span>
+              </div>
+              {{ form.affected_users(class="form-range", min=1, max=5) }}
+            </div>
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between">
+                {{ form.discoverability.label(class="form-label fw-semibold") }}
+                <span class="badge bg-primary">{{ form.discoverability.data or 1 }}</span>
+              </div>
+              {{ form.discoverability(class="form-range", min=1, max=5) }}
+            </div>
+          </div>
         </div>
       </div>
-      <div class="mb-3">
-        {{ form.countermeasure.label(class="form-label") }}
-        {{ form.countermeasure(class="form-control", rows=2) }}
+
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-body-tertiary"><h5 class="mb-0">Status & Countermeasure</h5></div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.status.label(class="form-label fw-semibold") }}
+              {{ form.status(class="form-select") }}
+            </div>
+            <div class="col-12">
+              {{ form.countermeasure.label(class="form-label fw-semibold") }}
+              {{ form.countermeasure(class="form-control", rows=3) }}
+            </div>
+          </div>
+        </div>
       </div>
-      {{ form.submit(class="btn btn-primary") }}
+
+      <button type="submit" class="btn btn-primary btn-lg align-self-start px-4">
+        <i class="cil-shield-check me-2"></i>{{ form.submit.label.text }}
+      </button>
     </form>
   </div>
 </div>

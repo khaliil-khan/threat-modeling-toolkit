@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Threat Toolkit{% endblock %}
+{% block content %}
+<div class="py-3 py-md-4">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Security Dashboard</h2>
+      <p class="text-medium-emphasis mb-0">Quick overview of model activity and risk posture.</p>
+    </div>
+    <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary">
+      <i class="cil-plus me-2"></i>New Threat Model
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card text-white border-0 shadow-sm metric-card-primary">
+        <div class="card-body">
+          <div class="fs-2 fw-bold">{{ total_models }}</div>
+          <div class="text-white-50">Threat Models</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card text-white border-0 shadow-sm metric-card-info">
+        <div class="card-body">
+          <div class="fs-2 fw-bold">{{ total_threats }}</div>
+          <div class="text-white-50">Total Threats</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card text-white border-0 shadow-sm metric-card-danger">
+        <div class="card-body">
+          <div class="fs-2 fw-bold">{{ critical }}</div>
+          <div class="text-white-50">Critical Risks</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card text-dark border-0 shadow-sm metric-card-warning">
+        <div class="card-body">
+          <div class="fs-2 fw-bold">{{ open_threats }}</div>
+          <div>Open Threats</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-body-tertiary">
+          <h5 class="mb-0">Threat Distribution Chart</h5>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center chart-placeholder">
+          <div class="text-center text-medium-emphasis">
+            <i class="cil-chart-pie fs-1 d-block mb-2"></i>
+            Doughnut chart placeholder (300px)
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-body-tertiary">
+          <h5 class="mb-0">Risk Matrix (5x5)</h5>
+        </div>
+        <div class="card-body d-flex align-items-center justify-content-center chart-placeholder">
+          <div class="text-center text-medium-emphasis">
+            <i class="cil-grid fs-1 d-block mb-2"></i>
+            Canvas placeholder for risk matrix
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if total_models == 0 %}
+  <div class="card mt-4">
+    <div class="card-body text-center py-4">
+      <h5 class="mb-2">No models yet</h5>
+      <p class="text-medium-emphasis mb-3">Create your first threat model to populate this dashboard with live metrics.</p>
+      <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary">
+        <i class="cil-plus me-2"></i>Create Threat Model
+      </a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
