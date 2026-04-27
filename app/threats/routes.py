@@ -50,7 +50,9 @@ def add_threat(model_id):
         threat = Threat(
             title=form.title.data,
             description=form.description.data,
-            stride_category=form.stride_category.data,
+            stride_category=form.stride_category.data if model.methodology == 'STRIDE' else None,
+            pasta_category=form.pasta_category.data if model.methodology == 'PASTA' else None,
+            dread_category=form.dread_category.data if model.methodology == 'DREAD' else None,
             damage=form.damage.data,
             reproducibility=form.reproducibility.data,
             exploitability=form.exploitability.data,
