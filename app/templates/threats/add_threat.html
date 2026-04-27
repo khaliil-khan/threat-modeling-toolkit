@@ -10,7 +10,7 @@
             <i class="cil-shield-alt me-2"></i>Add Threat
           </h1>
           <p class="text-medium-emphasis">Analyzing threat for: <strong>{{ model.name }}</strong></p>
-          <p class="text-soft mt-3"><small><i class="cil-info me-1"></i>Methodology: <span class="methodology-badge methodology-{% if model.methodology == 'PASTA' %}pasta{% else %}stride{% endif %}">{{ model.methodology }}</span></small></p>
+          <p class="text-soft mt-3"><small><i class="cil-info me-1"></i>Methodology: <span class="methodology-badge methodology-{% if model.methodology == 'PASTA' %}pasta{% elif model.methodology == 'DREAD' %}dread{% else %}stride{% endif %}">{{ model.methodology }}</span></small></p>
         </div>
       </div>
 
@@ -42,6 +42,14 @@
                       {% for error in form.pasta_category.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
                     </small>
                   {% endif %}
+                {% elif model.methodology == 'DREAD' %}
+                  {{ form.dread_category.label(class="form-label fw-semibold") }}
+                  {{ form.dread_category(class="form-select form-select-lg") }}
+                  {% if form.dread_category.errors %}
+                    <small class="text-danger d-block mt-2">
+                      {% for error in form.dread_category.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                    </small>
+                  {% endif %}
                 {% else %}
                   {{ form.stride_category.label(class="form-label fw-semibold") }}
                   {{ form.stride_category(class="form-select form-select-lg") }}
@@ -71,7 +79,7 @@
             <h5 class="mb-0"><i class="cil-chart-line me-2"></i>DREAD Risk Assessment</h5>
           </div>
           <div class="card-body p-4 p-md-5">
-            <p class="text-medium-emphasis mb-4"><small><i class="cil-info me-1"></i>DREAD is a risk assessment methodology. Rate each factor from 1 (low impact) to 5 (high impact).</small></p>
+            <p class="text-medium-emphasis mb-4"><small><i class="cil-info me-1"></i>DREAD quantifies risk by rating each factor from 1 (low impact) to 5 (high impact). The average score determines overall threat severity.</small></p>
             <div class="row g-4">
               <div class="col-md-6">
                 <div class="threat-category-card">

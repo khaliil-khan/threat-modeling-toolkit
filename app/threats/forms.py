@@ -19,10 +19,18 @@ PASTA_CHOICES = [
     ('Business Impact', 'Business Impact — Damage to business objectives'),
 ]
 
+DREAD_CHOICES = [
+    ('Damage Potential', 'Damage Potential — Potential loss from exploitation'),
+    ('Reproducibility', 'Reproducibility — Ease of reproducing the attack'),
+    ('Exploitability', 'Exploitability — Skill/effort required to exploit'),
+    ('Affected Users', 'Affected Users — Number of users impacted'),
+    ('Discoverability', 'Discoverability — Likelihood threat will be discovered'),
+]
+
 class ThreatModelForm(FlaskForm):
     name = StringField('Model Name', validators=[DataRequired()])
     description = TextAreaField('Description')
-    methodology = SelectField('Methodology', choices=[('STRIDE', 'STRIDE'), ('PASTA', 'PASTA')])
+    methodology = SelectField('Methodology', choices=[('STRIDE', 'STRIDE'), ('PASTA', 'PASTA'), ('DREAD', 'DREAD')])
     submit = SubmitField('Save Threat Model')
 
 class ThreatForm(FlaskForm):
@@ -30,6 +38,7 @@ class ThreatForm(FlaskForm):
     description = TextAreaField('Description')
     stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES, render_kw={'class': 'form-select'})
     pasta_category = SelectField('PASTA Category', choices=PASTA_CHOICES, render_kw={'class': 'form-select'})
+    dread_category = SelectField('DREAD Factor', choices=DREAD_CHOICES, render_kw={'class': 'form-select'})
     # DREAD sliders (1-5)
     damage = IntegerRangeField('Damage', validators=[NumberRange(1, 5)], default=1)
     reproducibility = IntegerRangeField('Reproducibility', validators=[NumberRange(1, 5)], default=1)

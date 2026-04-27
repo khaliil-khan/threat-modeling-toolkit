@@ -5,7 +5,7 @@
   <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
     <div>
       <h1 class="mb-2 fw-bold fs-2" style="letter-spacing: -0.5px;">My Threat Models</h1>
-      <p class="mb-0 text-white-50">Create comprehensive threat models using STRIDE or PASTA methodologies with DREAD-based risk assessment.</p>
+      <p class="mb-0 text-white-50">Create comprehensive threat models using STRIDE, PASTA, or DREAD methodologies with quantitative DREAD-based risk assessment.</p>
     </div>
     <a href="{{ url_for('threats.create_model') }}" class="btn btn-primary btn-lg shadow">
       <i class="cil-plus me-2"></i>Create New Model
@@ -22,7 +22,7 @@
         <h5 class="card-title mb-2">{{ m.name }}</h5>
         <p class="card-text text-medium-emphasis mb-3 flex-grow-1">{{ m.description or 'No description available yet.' }}</p>
         <div class="mb-4 d-flex flex-wrap gap-2">
-          <span class="methodology-badge methodology-{% if m.methodology == 'PASTA' %}pasta{% else %}stride{% endif %}">
+          <span class="methodology-badge methodology-{% if m.methodology == 'PASTA' %}pasta{% elif m.methodology == 'DREAD' %}dread{% else %}stride{% endif %}">
             <i class="cil-layers me-1"></i>{{ m.methodology }}
           </span>
           <span class="badge bg-secondary"><i class="cil-checkmark-circle me-1"></i>{{ m.status }}</span>
@@ -59,52 +59,53 @@
 
 <!-- Information Section -->
 <div class="row g-4 mt-5">
-  <div class="col-md-6">
+  <div class="col-lg-6">
     <div class="card border-0 shadow-sm">
       <div class="card-header">
-        <h5 class="mb-0"><i class="cil-info me-2"></i>STRIDE & PASTA</h5>
+        <h5 class="mb-0"><i class="cil-layers me-2"></i>STRIDE & PASTA Methodologies</h5>
       </div>
       <div class="card-body p-4">
-        <div class="mb-3">
+        <div class="mb-4">
           <div class="threat-category-label mb-2">STRIDE</div>
-          <p class="text-soft small">Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege — a threat categorization model.</p>
+          <p class="text-soft small">Threat categorization: Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege.</p>
         </div>
         <div>
           <div class="threat-category-label mb-2">PASTA</div>
-          <p class="text-soft small">Process for Attack Simulation and Threat Analysis — focuses on Threat Agent, Attack Vector, Vulnerable Asset, Technical Impact, and Business Impact.</p>
+          <p class="text-soft small">Attack simulation: Threat Agent, Attack Vector, Vulnerable Asset, Technical Impact, Business Impact.</p>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-md-6">
+  <div class="col-lg-6">
     <div class="card border-0 shadow-sm">
       <div class="card-header">
-        <h5 class="mb-0"><i class="cil-chart-line me-2"></i>DREAD Scoring</h5>
+        <h5 class="mb-0"><i class="cil-chart-line me-2"></i>DREAD Methodology</h5>
       </div>
       <div class="card-body p-4">
-        <p class="text-soft small mb-3">DREAD is a risk assessment framework with five factors:</p>
+        <p class="text-soft small mb-3"><strong>Risk Assessment Framework:</strong> Quantify threats by scoring five key factors (1-5 scale).</p>
         <div class="dread-score-display">
           <div class="dread-factor">
-            <span class="dread-factor-label">Damage</span>
-            <small class="text-soft">Extent of damage if exploited</small>
+            <span class="dread-factor-label">D — Damage</span>
+            <small class="text-soft">Potential loss from exploitation</small>
           </div>
           <div class="dread-factor">
-            <span class="dread-factor-label">Reproducibility</span>
-            <small class="text-soft">Ease of reproducing the attack</small>
+            <span class="dread-factor-label">R — Reproducibility</span>
+            <small class="text-soft">Ease of reproducing attack</small>
           </div>
           <div class="dread-factor">
-            <span class="dread-factor-label">Exploitability</span>
-            <small class="text-soft">Difficulty to exploit</small>
+            <span class="dread-factor-label">E — Exploitability</span>
+            <small class="text-soft">Skill/effort required</small>
           </div>
           <div class="dread-factor">
-            <span class="dread-factor-label">Affected Users</span>
-            <small class="text-soft">Scope of potential victims</small>
+            <span class="dread-factor-label">A — Affected Users</span>
+            <small class="text-soft">Scope of impact</small>
           </div>
           <div class="dread-factor">
-            <span class="dread-factor-label">Discoverability</span>
+            <span class="dread-factor-label">D — Discoverability</span>
             <small class="text-soft">Likelihood of discovery</small>
           </div>
         </div>
+        <p class="text-soft small mt-3 mb-0"><strong>Note:</strong> DREAD scoring is available for all methodologies to quantify risk.</p>
       </div>
     </div>
   </div>

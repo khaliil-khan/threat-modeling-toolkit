@@ -42,8 +42,10 @@
               {{ form.methodology.label(class="form-label fw-semibold") }}
               {{ form.methodology(class="form-select form-select-lg input-gradient") }}
               <small class="text-medium-emphasis d-block mt-2">
-                <i class="cil-info me-1"></i><strong>STRIDE:</strong> Categorizes threats by attack type (Spoofing, Tampering, etc.)
-                <br><strong>PASTA:</strong> Analyzes threats by business and technical impact
+                <i class="cil-info me-1"></i>
+                <strong>STRIDE:</strong> Categorizes threats by attack type
+                <br><strong>PASTA:</strong> Analyzes by business/technical impact
+                <br><strong>DREAD:</strong> Risk assessment via quantitative factors
               </small>
               {% if form.methodology.errors %}
                 <small class="text-danger d-block mt-2">
