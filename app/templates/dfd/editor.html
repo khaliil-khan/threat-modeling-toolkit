@@ -14,11 +14,29 @@
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dfd_editor.js') }}"></script>
 <script>
-  window.dfdSaveUrl = "{{ url_for('dfd.save_dfd', model_id=model.id) }}";
-  let savedJSON = {{ (model.dfd_data.canvas_json if model.dfd_data else '{}') | tojson }};
-  if (savedJSON && savedJSON !== '{}') {
-    elements = JSON.parse(savedJSON);
-    drawAll();
+  // Ensure canvas is initialized when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeCanvas();
+      loadSavedDFD();
+    });
+  } else {
+    // DOM is already loaded
+    initializeCanvas();
+    loadSavedDFD();
+  }
+  
+  function loadSavedDFD() {
+    window.dfdSaveUrl = "{{ url_for('dfd.save_dfd', model_id=model.id) }}";
+    let savedJSON = {{ (model.dfd_data.canvas_json if model.dfd_data else '{}') | tojson }};
+    if (savedJSON && savedJSON !== '{}') {
+      try {
+        elements = JSON.parse(savedJSON);
+        drawAll();
+      } catch (e) {
+        console.error('Error loading saved DFD:', e);
+      }
+    }
   }
 </script>
 {% endblock %}

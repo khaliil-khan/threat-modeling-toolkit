@@ -1,6 +1,6 @@
 let elements = [];
-const canvas = document.getElementById('dfdCanvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+let canvas = null;
+let ctx = null;
 
 const shapeDefaults = {
   process: { w: 100, h: 50, color: '#3498db', label: 'Process' },
@@ -9,7 +9,25 @@ const shapeDefaults = {
   flow: { color: '#e74c3c', label: 'Flow' }
 };
 
+function initializeCanvas() {
+  canvas = document.getElementById('dfdCanvas');
+  ctx = canvas ? canvas.getContext('2d') : null;
+  if (!canvas || !ctx) {
+    console.error('Canvas element not found or cannot get 2D context');
+    return false;
+  }
+  return true;
+}
+
 function addElement(type) {
+  if (!ctx) {
+    console.warn('Canvas not initialized. Initializing now...');
+    if (!initializeCanvas()) {
+      alert('Error: Canvas not available.');
+      return;
+    }
+  }
+  
   let newEl;
   if (type === 'flow') {
     newEl = {
@@ -36,6 +54,14 @@ function addElement(type) {
 }
 
 function drawAll() {
+  if (!ctx) {
+    console.warn('Canvas not initialized. Initializing now...');
+    if (!initializeCanvas()) {
+      console.error('Cannot draw: Canvas context is null');
+      return;
+    }
+  }
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   elements.forEach(el => {
     if (el.type === 'flow') {
