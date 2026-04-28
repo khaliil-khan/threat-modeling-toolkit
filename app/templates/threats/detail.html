@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
+  <div id="identified-threats" class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
     <div class="card-header">
       <div class="d-flex align-items-center justify-content-between gap-2">
         <h4 class="mb-0"><i class="cil-shield-alt me-2"></i>Identified Threats</h4>
@@ -42,15 +42,7 @@
             <tr>
               <th style="width: 60px;">#</th>
               <th>Title</th>
-              <th>
-                {% if model.methodology == 'PASTA' %}
-                  PASTA Category
-                {% elif model.methodology == 'DREAD' %}
-                  DREAD Factor
-                {% else %}
-                  STRIDE Category
-                {% endif %}
-              </th>
+                <th>Category</th>
               <th style="width: 120px;">DREAD Score</th>
               <th style="width: 120px;">Risk Level</th>
               <th>Status</th>
@@ -63,13 +55,7 @@
               <td class="fw-semibold">{{ t.title }}</td>
               <td>
                 <span class="badge bg-info">
-                  {% if model.methodology == 'PASTA' %}
-                    {{ t.pasta_category or 'N/A' }}
-                  {% elif model.methodology == 'DREAD' %}
-                    {{ t.dread_category or 'N/A' }}
-                  {% else %}
-                    {{ t.stride_category or 'N/A' }}
-                  {% endif %}
+                  {{ t.stride_category or 'N/A' }}
                 </span>
               </td>
               <td>

@@ -17,6 +17,19 @@
       <form method="POST" class="vstack gap-4">
         {{ form.hidden_tag() }}
 
+        {% if form.errors %}
+        <div class="alert alert-danger border-0 shadow-sm">
+          <strong>Fix the highlighted fields and try again.</strong>
+          <ul class="mb-0 mt-2 ps-3">
+            {% for field, errors in form.errors.items() %}
+              {% for error in errors %}
+                <li>{{ field }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
         <!-- Threat Details Section -->
         <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
           <div class="card-header">
@@ -34,22 +47,9 @@
                 {% endif %}
               </div>
               <div class="col-md-6">
-                {% if model.methodology == 'PASTA' %}
-                  {{ form.pasta_category.label(class="form-label fw-semibold") }}
-                  {{ form.pasta_category(class="form-select form-select-lg") }}
-                  {% if form.pasta_category.errors %}
-                    <small class="text-danger d-block mt-2">
-                      {% for error in form.pasta_category.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
-                    </small>
-                  {% endif %}
-                {% elif model.methodology == 'DREAD' %}
-                  {{ form.dread_category.label(class="form-label fw-semibold") }}
-                  {{ form.dread_category(class="form-select form-select-lg") }}
-                  {% if form.dread_category.errors %}
-                    <small class="text-danger d-block mt-2">
-                      {% for error in form.dread_category.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
-                    </small>
-                  {% endif %}
+                {% if model.methodology == 'DREAD' %}
+                  <!-- DREAD uses numeric sliders for risk factors; no separate category stored -->
+                  <div class="text-muted small">DREAD methodology: use the sliders below to score each factor.</div>
                 {% else %}
                   {{ form.stride_category.label(class="form-label fw-semibold") }}
                   {{ form.stride_category(class="form-select form-select-lg") }}
@@ -89,9 +89,9 @@
                   <p class="text-soft small mb-3">What is the extent of damage if this threat is exploited?</p>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-soft small">Impact Level</span>
-                    <span class="dread-factor-value">{{ form.damage.data or 1 }}/5</span>
+                    <span id="damage_value" data-dread-value-for="damage" class="dread-factor-value">{{ form.damage.data or 1 }}/5</span>
                   </div>
-                  {{ form.damage(class="form-range", min=1, max=5, style="height: 8px;") }}
+                  {{ form.damage(id="damage", class="form-range", min=1, max=5, style="height: 8px;") }}
                 </div>
               </div>
               <div class="col-md-6">
@@ -102,9 +102,9 @@
                   <p class="text-soft small mb-3">How easy is it to reproduce this attack?</p>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-soft small">Difficulty</span>
-                    <span class="dread-factor-value">{{ form.reproducibility.data or 1 }}/5</span>
+                    <span id="reproducibility_value" data-dread-value-for="reproducibility" class="dread-factor-value">{{ form.reproducibility.data or 1 }}/5</span>
                   </div>
-                  {{ form.reproducibility(class="form-range", min=1, max=5, style="height: 8px;") }}
+                  {{ form.reproducibility(id="reproducibility", class="form-range", min=1, max=5, style="height: 8px;") }}
                 </div>
               </div>
               <div class="col-md-6">
@@ -115,9 +115,9 @@
                   <p class="text-soft small mb-3">How difficult is it to exploit this threat?</p>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-soft small">Complexity</span>
-                    <span class="dread-factor-value">{{ form.exploitability.data or 1 }}/5</span>
+                        <span id="exploitability_value" data-dread-value-for="exploitability" class="dread-factor-value">{{ form.exploitability.data or 1 }}/5</span>
                   </div>
-                  {{ form.exploitability(class="form-range", min=1, max=5, style="height: 8px;") }}
+                      {{ form.exploitability(id="exploitability", class="form-range", min=1, max=5, style="height: 8px;") }}
                 </div>
               </div>
               <div class="col-md-6">
@@ -128,9 +128,9 @@
                   <p class="text-soft small mb-3">How many users would be affected?</p>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-soft small">Scope</span>
-                    <span class="dread-factor-value">{{ form.affected_users.data or 1 }}/5</span>
+                        <span id="affected_users_value" data-dread-value-for="affected_users" class="dread-factor-value">{{ form.affected_users.data or 1 }}/5</span>
                   </div>
-                  {{ form.affected_users(class="form-range", min=1, max=5, style="height: 8px;") }}
+                      {{ form.affected_users(id="affected_users", class="form-range", min=1, max=5, style="height: 8px;") }}
                 </div>
               </div>
               <div class="col-md-6">
@@ -141,9 +141,9 @@
                   <p class="text-soft small mb-3">How easy is it to discover this vulnerability?</p>
                   <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-soft small">Visibility</span>
-                    <span class="dread-factor-value">{{ form.discoverability.data or 1 }}/5</span>
+                      <span id="discoverability_value" data-dread-value-for="discoverability" class="dread-factor-value">{{ form.discoverability.data or 1 }}/5</span>
                   </div>
-                  {{ form.discoverability(class="form-range", min=1, max=5, style="height: 8px;") }}
+                  {{ form.discoverability(id="discoverability", class="form-range", min=1, max=5, style="height: 8px;") }}
                 </div>
               </div>
             </div>
@@ -192,9 +192,4 @@
   </div>
 </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    document.body.classList.add('is-ready');
-  });
-</script>
 {% endblock %}

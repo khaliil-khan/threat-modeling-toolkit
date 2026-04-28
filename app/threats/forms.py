@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, IntegerRangeField, SubmitField
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired, NumberRange, Optional
 
 STRIDE_CHOICES = [
     ('Spoofing', 'Spoofing — Impersonating someone/something'),
@@ -36,9 +36,7 @@ class ThreatModelForm(FlaskForm):
 class ThreatForm(FlaskForm):
     title = StringField('Threat Title', validators=[DataRequired()])
     description = TextAreaField('Description')
-    stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES, render_kw={'class': 'form-select'})
-    pasta_category = SelectField('PASTA Category', choices=PASTA_CHOICES, render_kw={'class': 'form-select'})
-    dread_category = SelectField('DREAD Factor', choices=DREAD_CHOICES, render_kw={'class': 'form-select'})
+    stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES, validators=[Optional()], render_kw={'class': 'form-select'})
     # DREAD sliders (1-5)
     damage = IntegerRangeField('Damage', validators=[NumberRange(1, 5)], default=1)
     reproducibility = IntegerRangeField('Reproducibility', validators=[NumberRange(1, 5)], default=1)

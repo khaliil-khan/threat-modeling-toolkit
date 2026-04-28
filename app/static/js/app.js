@@ -20,4 +20,22 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   document.body.classList.add('is-ready');
+
+  const dreadRangeInputs = document.querySelectorAll('input[type="range"]');
+
+  dreadRangeInputs.forEach(function(input) {
+    const display = document.querySelector('[data-dread-value-for="' + input.id + '"]');
+    if (!display) {
+      return;
+    }
+
+    const updateValue = function() {
+      display.textContent = input.value + '/5';
+    };
+
+    input.addEventListener('input', updateValue);
+    input.addEventListener('change', updateValue);
+    input.addEventListener('touchmove', updateValue, { passive: true });
+    updateValue();
+  });
 });
