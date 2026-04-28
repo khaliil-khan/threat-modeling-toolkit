@@ -1,40 +1,57 @@
 {% extends "base.html" %}
+{% block title %}User Management - Threat Toolkit{% endblock %}
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header"><h4 class="mb-0">User Management</h4></div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped align-middle mb-0">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for user in users %}
-              <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="5" class="text-center text-muted">No users found.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+<div class="py-2 py-md-3">
+  <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="fw-bold mb-2 fs-2" style="letter-spacing: -0.5px;"><i class="cil-people me-2"></i>User Management</h1>
+      <p class="mb-0 text-medium-emphasis">Monitor accounts, roles, and onboarding activity.</p>
+    </div>
+    <span class="badge bg-primary px-3 py-2" style="white-space: nowrap;">
+      <i class="cil-people me-1"></i>{{ users|length }} {{ 'User' if users|length == 1 else 'Users' }}
+    </span>
+  </div>
+
+  <div class="card border-0 shadow-sm reveal-item">
+    <div class="card-body p-0">
+      {% if users %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th style="width: 100px;">Role</th>
+              <th style="width: 160px;">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td><code class="text-primary">{{ user.id }}</code></td>
+              <td class="fw-semibold">{{ user.username }}</td>
+              <td><a href="mailto:{{ user.email }}" class="link-primary">{{ user.email }}</a></td>
+              <td><span class="chip-soft text-capitalize"><i class="cil-badge me-1"></i>{{ user.role }}</span></td>
+              <td><small class="text-medium-emphasis">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="cil-inbox fs-1 d-block mb-3 text-medium-emphasis"></i>
+        <p class="text-medium-emphasis mb-0">No users found.</p>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
 {% endblock %}

@@ -3,68 +3,75 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Threat Modeling Toolkit</title>
-  <!-- CoreUI CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/coreui.min.css') }}">
+  <meta name="description" content="Professional Threat Modeling Toolkit">
+  <title>{% block title %}Threat Modeling Toolkit{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CoreUI CSS + Icons CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/@coreui/coreui@4.3.0/dist/css/coreui.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@coreui/icons/css/free.min.css" rel="stylesheet">
+  <!-- Custom overrides -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block head_extra %}{% endblock %}
 </head>
-<body>
+<body class="app-body">
   <div class="sidebar sidebar-dark sidebar-fixed" id="sidebar">
     <div class="sidebar-brand d-none d-md-flex">
-      <span class="sidebar-brand-full">Threat Toolkit</span>
+      <span class="sidebar-brand-full fw-bold">Threat Toolkit</span>
     </div>
     <ul class="sidebar-nav" data-coreui="navigation">
-      {% if endpoint_exists('dashboard.index') %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.index') }}"><i class="nav-icon cil-speedometer"></i> Dashboard</a></li>
-      {% else %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="nav-icon cil-speedometer"></i> Dashboard</a></li>
-      {% endif %}
-
-      {% if endpoint_exists('threats.list_models') %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('threats.list_models') }}"><i class="nav-icon cil-shield-alt"></i> Threat Models</a></li>
-      {% endif %}
-
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard.index') }}" title="View dashboard"><i class="cil-speedometer"></i> Dashboard</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('threats.list_models') }}" title="View threat models"><i class="cil-shield-alt"></i> Threat Models</a></li>
       {% if current_user.is_authenticated %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}"><i class="nav-icon cil-user"></i> My Profile</a></li>
-      {% if current_user.role == 'admin' %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.admin_users') }}"><i class="nav-icon cil-people"></i> Manage Users</a></li>
-      {% endif %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}"><i class="nav-icon cil-account-logout"></i> Logout</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}" title="View your profile"><i class="cil-user"></i> My Profile</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}" title="Sign out"><i class="cil-account-logout"></i> Logout</a></li>
       {% else %}
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}"><i class="nav-icon cil-account-logout"></i> Login</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}"><i class="nav-icon cil-user"></i> Register</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}" title="Sign in"><i class="cil-account-logout"></i> Login</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.register') }}" title="Create account"><i class="cil-user"></i> Register</a></li>
       {% endif %}
     </ul>
   </div>
   <div class="wrapper d-flex flex-column min-vh-100 bg-light">
     <header class="header header-sticky mb-4">
       <div class="container-fluid">
-        <button class="header-toggler px-md-0 me-md-3" type="button" id="sidebar-toggle-btn">
+        <button class="header-toggler px-md-0 me-md-3" type="button" id="sidebar-toggler" aria-label="Toggle sidebar">
           <span class="cil-menu"></span>
         </button>
-        <a class="header-brand d-md-none" href="/">Threat Toolkit</a>
+        <a class="header-brand d-md-none" href="/" title="Home">Threat Toolkit</a>
       </div>
     </header>
-    <div class="body flex-grow-1 px-3">
+    <main class="body flex-grow-1 px-3 app-content" role="main">
       <div class="container-lg">
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-              </div>
-            {% endfor %}
+            <div class="mb-4">
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            </div>
           {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
       </div>
-    </div>
+    </main>
+    <footer class="footer">
+      <div class="container-lg">
+        <div class="row">
+          <div class="col-12 text-center">
+            <strong>Threat Toolkit</strong> &copy; 2026 · Secure Software Design & Development
+          </div>
+        </div>
+      </div>
+    </footer>
   </div>
-  <!-- CoreUI JS -->
-  <script src="{{ url_for('static', filename='js/coreui.bundle.min.js') }}"></script>
+  <!-- CoreUI JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@coreui/coreui@4.3.0/dist/js/coreui.bundle.min.js"></script>
+  <!-- Custom app logic (sidebar toggle, etc.) -->
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-  <!-- Chart.js (for dashboard later) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

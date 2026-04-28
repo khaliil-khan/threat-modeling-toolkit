@@ -1,59 +1,195 @@
 {% extends "base.html" %}
+{% block title %}Add Threat - Threat Toolkit{% endblock %}
 {% block content %}
-<h2>Add Threat to "{{ model.name }}"</h2>
-<div class="card">
-  <div class="card-body">
-    <form method="POST">
-      {{ form.hidden_tag() }}
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          {{ form.title.label(class="form-label") }}
-          {{ form.title(class="form-control") }}
-        </div>
-        <div class="col-md-6 mb-3">
-          {{ form.stride_category.label(class="form-label") }}
-          {{ form.stride_category(class="form-select") }}
+<div class="py-3 py-md-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-9">
+      <div class="card border-0 shadow-sm mb-4 reveal-item">
+        <div class="card-body p-4 p-md-5">
+          <h1 class="fw-bold mb-2 fs-2">
+            <i class="cil-shield-alt me-2"></i>Add Threat
+          </h1>
+          <p class="text-medium-emphasis">Analyzing threat for: <strong>{{ model.name }}</strong></p>
+          <p class="text-soft mt-3"><small><i class="cil-info me-1"></i>Methodology: <span class="methodology-badge methodology-{% if model.methodology == 'PASTA' %}pasta{% elif model.methodology == 'DREAD' %}dread{% else %}stride{% endif %}">{{ model.methodology }}</span></small></p>
         </div>
       </div>
-      <div class="mb-3">
-        {{ form.description.label(class="form-label") }}
-        {{ form.description(class="form-control", rows=3) }}
-      </div>
-      <h5>DREAD Ratings (1-5)</h5>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          {{ form.damage.label(class="form-label") }}
-          {{ form.damage(class="form-range", min=1, max=5) }}
+
+      <form method="POST" class="vstack gap-4">
+        {{ form.hidden_tag() }}
+
+        {% if form.errors %}
+        <div class="alert alert-danger border-0 shadow-sm">
+          <strong>Fix the highlighted fields and try again.</strong>
+          <ul class="mb-0 mt-2 ps-3">
+            {% for field, errors in form.errors.items() %}
+              {% for error in errors %}
+                <li>{{ field }}: {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
         </div>
-        <div class="col-md-4 mb-3">
-          {{ form.reproducibility.label(class="form-label") }}
-          {{ form.reproducibility(class="form-range", min=1, max=5) }}
+        {% endif %}
+
+        <!-- Threat Details Section -->
+        <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="cil-shield-alt me-2"></i>Threat Details</h5>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <div class="row g-4">
+              <div class="col-md-6">
+                {{ form.title.label(class="form-label fw-semibold") }}
+                {{ form.title(class="form-control form-control-lg", placeholder="Threat title...") }}
+                {% if form.title.errors %}
+                  <small class="text-danger d-block mt-2">
+                    {% for error in form.title.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                  </small>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                {% if model.methodology == 'DREAD' %}
+                  <!-- DREAD uses numeric sliders for risk factors; no separate category stored -->
+                  <div class="text-muted small">DREAD methodology: use the sliders below to score each factor.</div>
+                {% else %}
+                  {{ form.stride_category.label(class="form-label fw-semibold") }}
+                  {{ form.stride_category(class="form-select form-select-lg") }}
+                  {% if form.stride_category.errors %}
+                    <small class="text-danger d-block mt-2">
+                      {% for error in form.stride_category.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                    </small>
+                  {% endif %}
+                {% endif %}
+              </div>
+              <div class="col-12">
+                {{ form.description.label(class="form-label fw-semibold") }}
+                {{ form.description(class="form-control", rows=3, placeholder="Describe the threat, attack vectors, and potential impact...") }}
+                {% if form.description.errors %}
+                  <small class="text-danger d-block mt-2">
+                    {% for error in form.description.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                  </small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="col-md-4 mb-3">
-          {{ form.exploitability.label(class="form-label") }}
-          {{ form.exploitability(class="form-range", min=1, max=5) }}
+
+        <!-- DREAD Ratings Section -->
+        <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 100ms;">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="cil-chart-line me-2"></i>DREAD Risk Assessment</h5>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <p class="text-medium-emphasis mb-4"><small><i class="cil-info me-1"></i>DREAD quantifies risk by rating each factor from 1 (low impact) to 5 (high impact). The average score determines overall threat severity.</small></p>
+            <div class="row g-4">
+              <div class="col-md-6">
+                <div class="threat-category-card">
+                  <div class="threat-category-label">
+                    <i class="cil-bolt me-1"></i>Damage
+                  </div>
+                  <p class="text-soft small mb-3">What is the extent of damage if this threat is exploited?</p>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-soft small">Impact Level</span>
+                    <span id="damage_value" data-dread-value-for="damage" class="dread-factor-value">{{ form.damage.data or 1 }}/5</span>
+                  </div>
+                  {{ form.damage(id="damage", class="form-range", min=1, max=5, style="height: 8px;") }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="threat-category-card">
+                  <div class="threat-category-label">
+                    <i class="cil-repeat me-1"></i>Reproducibility
+                  </div>
+                  <p class="text-soft small mb-3">How easy is it to reproduce this attack?</p>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-soft small">Difficulty</span>
+                    <span id="reproducibility_value" data-dread-value-for="reproducibility" class="dread-factor-value">{{ form.reproducibility.data or 1 }}/5</span>
+                  </div>
+                  {{ form.reproducibility(id="reproducibility", class="form-range", min=1, max=5, style="height: 8px;") }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="threat-category-card">
+                  <div class="threat-category-label">
+                    <i class="cil-puzzle me-1"></i>Exploitability
+                  </div>
+                  <p class="text-soft small mb-3">How difficult is it to exploit this threat?</p>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-soft small">Complexity</span>
+                        <span id="exploitability_value" data-dread-value-for="exploitability" class="dread-factor-value">{{ form.exploitability.data or 1 }}/5</span>
+                  </div>
+                      {{ form.exploitability(id="exploitability", class="form-range", min=1, max=5, style="height: 8px;") }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="threat-category-card">
+                  <div class="threat-category-label">
+                    <i class="cil-people me-1"></i>Affected Users
+                  </div>
+                  <p class="text-soft small mb-3">How many users would be affected?</p>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-soft small">Scope</span>
+                        <span id="affected_users_value" data-dread-value-for="affected_users" class="dread-factor-value">{{ form.affected_users.data or 1 }}/5</span>
+                  </div>
+                      {{ form.affected_users(id="affected_users", class="form-range", min=1, max=5, style="height: 8px;") }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="threat-category-card">
+                  <div class="threat-category-label">
+                    <i class="cil-search me-1"></i>Discoverability
+                  </div>
+                  <p class="text-soft small mb-3">How easy is it to discover this vulnerability?</p>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-soft small">Visibility</span>
+                      <span id="discoverability_value" data-dread-value-for="discoverability" class="dread-factor-value">{{ form.discoverability.data or 1 }}/5</span>
+                  </div>
+                  {{ form.discoverability(id="discoverability", class="form-range", min=1, max=5, style="height: 8px;") }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4 mb-3">
-          {{ form.affected_users.label(class="form-label") }}
-          {{ form.affected_users(class="form-range", min=1, max=5) }}
+
+        <!-- Status & Countermeasure Section -->
+        <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 150ms;">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="cil-shield-check me-2"></i>Status & Mitigation</h5>
+          </div>
+          <div class="card-body p-4 p-md-5">
+            <div class="row g-4">
+              <div class="col-md-6">
+                {{ form.status.label(class="form-label fw-semibold") }}
+                {{ form.status(class="form-select form-select-lg") }}
+                {% if form.status.errors %}
+                  <small class="text-danger d-block mt-2">
+                    {% for error in form.status.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                  </small>
+                {% endif %}
+              </div>
+              <div class="col-12">
+                {{ form.countermeasure.label(class="form-label fw-semibold") }}
+                {{ form.countermeasure(class="form-control", rows=4, placeholder="Describe the countermeasures and mitigation strategies...") }}
+                {% if form.countermeasure.errors %}
+                  <small class="text-danger d-block mt-2">
+                    {% for error in form.countermeasure.errors %}<i class="cil-warning me-1"></i>{{ error }}{% endfor %}
+                  </small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="col-md-4 mb-3">
-          {{ form.discoverability.label(class="form-label") }}
-          {{ form.discoverability(class="form-range", min=1, max=5) }}
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success btn-lg px-5">
+            <i class="cil-shield-check me-2"></i>{{ form.submit.label.text }}
+          </button>
+          <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-outline-secondary btn-lg px-5">
+            <i class="cil-x me-2"></i>Cancel
+          </a>
         </div>
-        <div class="col-md-4 mb-3">
-          {{ form.status.label(class="form-label") }}
-          {{ form.status(class="form-select") }}
-        </div>
-      </div>
-      <div class="mb-3">
-        {{ form.countermeasure.label(class="form-label") }}
-        {{ form.countermeasure(class="form-control", rows=2) }}
-      </div>
-      {{ form.submit(class="btn btn-primary") }}
-    </form>
+      </form>
+    </div>
   </div>
 </div>
+
 {% endblock %}

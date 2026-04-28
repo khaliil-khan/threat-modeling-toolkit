@@ -1,15 +1,61 @@
 {% extends "base.html" %}
+{% block title %}My Profile - Threat Toolkit{% endblock %}
 {% block content %}
-<div class="row">
-  <div class="col-lg-8">
-    <div class="card mb-4">
-      <div class="card-header"><h4 class="mb-0">My Profile</h4></div>
-      <div class="card-body">
-        <p class="mb-2"><strong>Username:</strong> {{ current_user.username }}</p>
-        <p class="mb-2"><strong>Email:</strong> {{ current_user.email }}</p>
-        <p class="mb-0"><strong>Role:</strong> {{ current_user.role }}</p>
+<div class="py-2 py-md-3">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card h-100 border-0 shadow-sm reveal-item">
+        <div class="card-body p-4 p-md-5">
+          <div class="section-title">
+            <i class="cil-user"></i>
+            <span>My Profile</span>
+          </div>
+          <div class="profile-kv">
+            <span class="text-medium-emphasis"><strong>Username</strong></span>
+            <code class="text-primary">{{ current_user.username }}</code>
+          </div>
+          <div class="profile-kv">
+            <span class="text-medium-emphasis"><strong>Email</strong></span>
+            <a href="mailto:{{ current_user.email }}" class="link-primary">{{ current_user.email }}</a>
+          </div>
+          <div class="profile-kv">
+            <span class="text-medium-emphasis"><strong>Role</strong></span>
+            <span class="chip-soft text-capitalize"><i class="cil-badge me-1"></i>{{ current_user.role }}</span>
+          </div>
+          <div class="profile-kv">
+            <span class="text-medium-emphasis"><strong>Account Status</strong></span>
+            <span class="badge bg-success"><i class="cil-checkmark-circle me-1"></i>Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card h-100 border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
+        <div class="card-body p-4">
+          <div class="section-title">
+            <i class="cil-shield-alt"></i>
+            <span>Security</span>
+          </div>
+          <p class="text-medium-emphasis mb-4">
+            <small>Keep your account secure and manage your threat models.</small>
+          </p>
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('threats.list_models') }}" class="btn btn-outline-primary">
+              <i class="cil-list-rich me-2"></i>Threat Models
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+              <i class="cil-account-logout me-2"></i>Sign Out
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
 {% endblock %}

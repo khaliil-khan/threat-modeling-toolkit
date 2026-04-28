@@ -1,24 +1,79 @@
 {% extends "base.html" %}
+{% block title %}Create New Threat Model - Threat Toolkit{% endblock %}
 {% block content %}
-<h2>Create Threat Model</h2>
-<div class="card">
-  <div class="card-body">
-    <form method="POST">
-      {{ form.hidden_tag() }}
-      <div class="mb-3">
-        {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control") }}
+<div class="py-3 py-md-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+      <div class="card border-0 shadow-lg reveal-item">
+        <div class="card-header py-4">
+          <div>
+            <h2 class="mb-0 fw-bold"><i class="cil-shield-alt me-2"></i>Create New Threat Model</h2>
+            <p class="text-medium-emphasis mb-0 mt-2">Define your threat model with methodology and description.</p>
+          </div>
+        </div>
+        <div class="card-body p-4 p-md-5">
+          <form method="POST" class="vstack gap-4">
+            {{ form.hidden_tag() }}
+
+            <div>
+              {{ form.name.label(class="form-label fw-semibold") }}
+              {{ form.name(class="form-control form-control-lg input-gradient", placeholder="e.g., Payment Gateway Threats") }}
+              {% if form.name.errors %}
+                <small class="text-danger d-block mt-2">
+                  {% for error in form.name.errors %}{{ error }}{% endfor %}
+                </small>
+              {% endif %}
+            </div>
+
+            <div>
+              {{ form.description.label(class="form-label fw-semibold") }}
+              {{ form.description(class="form-control input-gradient", rows=4, placeholder="Describe the scope and context of this threat model...") }}
+              <small class="text-medium-emphasis d-block mt-2">
+                <i class="cil-info me-1"></i>Include system boundaries, technologies, and key stakeholders.
+              </small>
+              {% if form.description.errors %}
+                <small class="text-danger d-block mt-2">
+                  {% for error in form.description.errors %}{{ error }}{% endfor %}
+                </small>
+              {% endif %}
+            </div>
+
+            <div>
+              {{ form.methodology.label(class="form-label fw-semibold") }}
+              {{ form.methodology(class="form-select form-select-lg input-gradient") }}
+              <small class="text-medium-emphasis d-block mt-2">
+                <i class="cil-info me-1"></i>
+                <strong>STRIDE:</strong> Categorizes threats by attack type
+                <br><strong>PASTA:</strong> Analyzes by business/technical impact
+                <br><strong>DREAD:</strong> Risk assessment via quantitative factors
+              </small>
+              {% if form.methodology.errors %}
+                <small class="text-danger d-block mt-2">
+                  {% for error in form.methodology.errors %}{{ error }}{% endfor %}
+                </small>
+              {% endif %}
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" class="btn btn-success btn-lg w-100">
+                <i class="cil-check-circle me-2"></i>{{ form.submit.label.text }}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        {{ form.description.label(class="form-label") }}
-        {{ form.description(class="form-control", rows=4) }}
+      <div class="mt-4 text-center">
+        <a href="{{ url_for('threats.list_models') }}" class="btn btn-link text-medium-emphasis">
+          <i class="cil-arrow-left me-1"></i>Back to Models
+        </a>
       </div>
-      <div class="mb-3">
-        {{ form.methodology.label(class="form-label") }}
-        {{ form.methodology(class="form-select") }}
-      </div>
-      {{ form.submit(class="btn btn-success") }}
-    </form>
+    </div>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
 {% endblock %}
