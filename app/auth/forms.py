@@ -39,3 +39,21 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember me')
     submit = SubmitField('Login')
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Request Password Reset')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('New Password', validators=[DataRequired(), Length(8, 100)])
+    confirm = PasswordField('Confirm Password', validators=[EqualTo('password')])
+    submit = SubmitField('Reset Password')
+    
+    def validate_password(self, field):
+        password = field.data or ''
+        if not re.search(r'[A-Z]', password):
+            raise ValidationError('Password must include at least one uppercase letter.')
+        if not re.search(r'[a-z]', password):
+            raise ValidationError('Password must include at least one lowercase letter.')
+        if not re.search(r'[0-9]', password):
+            raise ValidationError('Password must include at least one number.')

@@ -2,13 +2,16 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_user, logout_user, login_required, current_user
 from . import auth_bp
 from ..models import db, User
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm
 from urllib.parse import urljoin, urlparse
 from collections import defaultdict, deque
 from time import monotonic
 import os
 from functools import wraps
 from flask import session
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 AUTH_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get('AUTH_RATE_LIMIT_WINDOW_SECONDS', '300'))
@@ -177,3 +180,125 @@ def profile():
 def admin_users():
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('auth/admin_users.html', users=users)
+
+
+def send_reset_email(user, reset_token):
+    """Send password reset email to user"""
+    try:
+        smtp_server = os.environ.get('SMTP_SERVER', 'localhost')
+        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+        sender_email = os.environ.get('SENDER_EMAIL', 'noreply@threat-toolkit.local')
+        sender_password = os.environ.get('SENDER_PASSWORD', '')
+        
+        reset_url = url_for('auth.reset_password', token=reset_token, _external=True)
+        
+        subject = 'Password Reset Request - Threat Toolkit'
+        html_body = f"""
+        <html>
+            <body>
+                <h2>Password Reset Request</h2>
+                <p>Hello {user.username},</p>
+                <p>You requested to reset your password. Click the link below to proceed:</p>
+                <p><a href="{reset_url}">{reset_url}</a></p>
+                <p>This link will expire in 1 hour.</p>
+                <p>If you did not request a password reset, please ignore this email.</p>
+                <hr>
+                <p><em>Threat Toolkit Security Team</em></p>
+            </body>
+        </html>
+        """
+        
+        text_body = f"""
+        Password Reset Request
+        
+        Hello {user.username},
+        
+        You requested to reset your password. Visit the link below to proceed:
+        {reset_url}
+        
+        This link will expire in 1 hour.
+        
+        If you did not request a password reset, please ignore this email.
+        
+        Threat Toolkit Security Team
+        """
+        
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = user.email
+        
+        part1 = MIMEText(text_body, 'plain')
+        part2 = MIMEText(html_body, 'html')
+        msg.attach(part1)
+        msg.attach(part2)
+        
+        if smtp_server == 'localhost' or not sender_password:
+            # Development mode - just log it
+            current_app.logger.info(f'Password reset email for {user.email}: {reset_url}')
+            return True
+        
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        
+        return True
+    except Exception as e:
+        current_app.logger.error(f'Failed to send reset email: {str(e)}')
+        return False
+
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    """Request password reset"""
+    if current_user.is_authenticated:
+        return redirect(_default_post_login_redirect())
+    
+    form = ForgotPasswordForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data.lower()).first()
+        if user:
+            reset_token = user.generate_reset_token()
+            db.session.commit()
+            send_reset_email(user, reset_token)
+            current_app.logger.info(f'Password reset requested for user={user.username}')
+            flash('Check your email for instructions to reset your password.', 'info')
+        else:
+            # Don't reveal if email exists (security)
+            flash('Check your email for instructions to reset your password.', 'info')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/forgot_password.html', form=form)
+
+
+@auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    """Reset password with token"""
+    if current_user.is_authenticated:
+        return redirect(_default_post_login_redirect())
+    
+    if not token:
+        flash('Invalid or expired reset link.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.filter_by(reset_token=token).first()
+    if not user:
+        flash('Invalid or expired reset link.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    if not user.verify_reset_token(token):
+        flash('Invalid or expired reset link.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.session.commit()
+        current_app.logger.info(f'Password reset successful for user={user.username}')
+        flash('Your password has been reset! Please log in.', 'success')
+        return redirect(url_for('auth.login'))
+    
+    return render_template('auth/reset_password.html', form=form, token=token)

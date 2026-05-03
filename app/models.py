@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from itsdangerous import URLSafeTimedSerializer
+import os
 
 db = SQLAlchemy()
 
@@ -16,6 +18,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default=ROLE_USER, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_token = db.Column(db.String(256), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
     threat_models = db.relationship('ThreatModel', backref='owner', lazy=True)
 
     def set_password(self, password):
@@ -27,6 +31,36 @@ class User(UserMixin, db.Model):
     def has_role(self, *roles):
         normalized = {role.lower() for role in roles}
         return (self.role or '').lower() in normalized
+    
+    def generate_reset_token(self):
+        """Generate a password reset token valid for 1 hour"""
+        secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
+        serializer = URLSafeTimedSerializer(secret_key)
+        self.reset_token = serializer.dumps(self.email)
+        self.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+        return self.reset_token
+    
+    def verify_reset_token(self, token):
+        """Verify reset token and return email if valid"""
+        if not token or not self.reset_token_expiry:
+            return None
+        
+        if datetime.utcnow() > self.reset_token_expiry:
+            self.reset_token = None
+            self.reset_token_expiry = None
+            db.session.commit()
+            return None
+        
+        if token != self.reset_token:
+            return None
+        
+        secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
+        serializer = URLSafeTimedSerializer(secret_key)
+        try:
+            email = serializer.loads(token, max_age=3600)  # 1 hour
+            return email if email == self.email else None
+        except:
+            return None
 
 class ThreatModel(db.Model):
     __tablename__ = 'threat_models'
