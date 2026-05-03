@@ -43,6 +43,10 @@ class LoginForm(FlaskForm):
 class ForgotPasswordForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')
+    
+    def validate_email(self, field):
+        normalized = (field.data or '').strip().lower()
+        field.data = normalized
 
 class ResetPasswordForm(FlaskForm):
     password = PasswordField('New Password', validators=[DataRequired(), Length(8, 100)])
