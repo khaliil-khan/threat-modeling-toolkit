@@ -1,12 +1,24 @@
+version: '3.8'
+
 services:
   web:
     build: .
+    container_name: threat-toolkit
     ports:
       - '5000:5000'
     volumes:
       - ./instance:/app/instance
+      - ./app:/app/app
     environment:
-      - SECRET_KEY=${SECRET_KEY}
-      - APP_ENV=${APP_ENV}
-      - ADMIN_EMAILS=${ADMIN_EMAILS}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
+      - APP_ENV=${APP_ENV:-development}
+      - ADMIN_EMAILS=${ADMIN_EMAILS:-}
+      - FLASK_APP=app:create_app
+      - FLASK_ENV=${APP_ENV:-development}
     restart: unless-stopped
+    networks:
+      - threat-network
+
+networks:
+  threat-network:
+    driver: bridge
