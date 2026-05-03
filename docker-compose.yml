@@ -7,17 +7,23 @@ services:
     ports:
       - '5000:5000'
     volumes:
-      - ./instance:/app/instance
       - ./app:/app/app
     environment:
       - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
       - APP_ENV=${APP_ENV:-development}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
-      - FLASK_APP=app:create_app
-      - FLASK_ENV=${APP_ENV:-development}
+      - FLASK_APP=wsgi:app
+      - FLASK_ENV=development
+      - FLASK_DEBUG=true
     restart: unless-stopped
     networks:
       - threat-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/auth/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
 networks:
   threat-network:
