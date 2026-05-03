@@ -185,25 +185,38 @@ def admin_users():
 def send_reset_email(user, reset_token):
     """Send password reset email to user"""
     try:
-        smtp_server = os.environ.get('SMTP_SERVER', 'localhost')
-        smtp_port = int(os.environ.get('SMTP_PORT', '587'))
-        sender_email = os.environ.get('SENDER_EMAIL', 'noreply@threat-toolkit.local')
-        sender_password = os.environ.get('SENDER_PASSWORD', '')
+        smtp_server = os.environ.get('SMTP_SERVER', '').strip()
+        smtp_port = os.environ.get('SMTP_PORT', '587').strip()
+        sender_email = os.environ.get('SENDER_EMAIL', '').strip()
+        sender_password = os.environ.get('SENDER_PASSWORD', '').strip()
         
         reset_url = url_for('auth.reset_password', token=reset_token, _external=True)
         
         subject = 'Password Reset Request - Threat Toolkit'
         html_body = f"""
         <html>
-            <body>
-                <h2>Password Reset Request</h2>
-                <p>Hello {user.username},</p>
-                <p>You requested to reset your password. Click the link below to proceed:</p>
-                <p><a href="{reset_url}">{reset_url}</a></p>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you did not request a password reset, please ignore this email.</p>
-                <hr>
-                <p><em>Threat Toolkit Security Team</em></p>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                    <h2 style="color: #2f81f7;">Password Reset Request</h2>
+                    <p>Hello <strong>{user.username}</strong>,</p>
+                    <p>You requested to reset your password for your Threat Toolkit account.</p>
+                    <p>Click the button below to set a new password:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" style="background-color: #2f81f7; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    <p style="font-size: 12px; color: #666;">Or copy this link:</p>
+                    <p style="font-size: 12px; color: #0066cc; word-break: break-all;"><a href="{reset_url}">{reset_url}</a></p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                    <p><strong>⏱️ Important:</strong> This link will expire in <strong>1 hour</strong>.</p>
+                    <p style="color: #666;">If you did not request a password reset, please ignore this email. Your account is safe.</p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #999;">
+                        <em>Threat Toolkit Security Team</em><br>
+                        This is an automated security email. Please do not reply.
+                    </p>
+                </div>
             </body>
         </html>
         """
@@ -213,19 +226,22 @@ def send_reset_email(user, reset_token):
         
         Hello {user.username},
         
-        You requested to reset your password. Visit the link below to proceed:
+        You requested to reset your password for your Threat Toolkit account.
+        
+        Click the link below to set a new password:
         {reset_url}
         
-        This link will expire in 1 hour.
+        Important: This link will expire in 1 hour.
         
-        If you did not request a password reset, please ignore this email.
+        If you did not request a password reset, please ignore this email. Your account is safe.
         
         Threat Toolkit Security Team
+        This is an automated security email. Please do not reply.
         """
         
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
-        msg['From'] = sender_email
+        msg['From'] = sender_email if sender_email else 'Threat Toolkit <noreply@threat-toolkit.local>'
         msg['To'] = user.email
         
         part1 = MIMEText(text_body, 'plain')
@@ -233,19 +249,34 @@ def send_reset_email(user, reset_token):
         msg.attach(part1)
         msg.attach(part2)
         
-        if smtp_server == 'localhost' or not sender_password:
-            # Development mode - just log it
-            current_app.logger.info(f'Password reset email for {user.email}: {reset_url}')
-            return True
+        # Check if SMTP is properly configured
+        if not smtp_server or not sender_email or not sender_password:
+            current_app.logger.warning(f'⚠️ Email not sent - SMTP not configured')
+            current_app.logger.info(f'📧 Reset link for {user.email}: {reset_url}')
+            return False
         
+        try:
+            smtp_port = int(smtp_port)
+        except ValueError:
+            current_app.logger.error(f'Invalid SMTP_PORT: {smtp_port}')
+            return False
+        
+        # Send email via SMTP
         with smtplib.SMTP(smtp_server, smtp_port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
             server.send_message(msg)
         
+        current_app.logger.info(f'✓ Password reset email sent to {user.email}')
         return True
+    except smtplib.SMTPAuthenticationError:
+        current_app.logger.error(f'✗ SMTP Authentication failed - check email/password')
+        return False
+    except smtplib.SMTPException as e:
+        current_app.logger.error(f'✗ SMTP error: {str(e)}')
+        return False
     except Exception as e:
-        current_app.logger.error(f'Failed to send reset email: {str(e)}')
+        current_app.logger.error(f'✗ Failed to send reset email: {str(e)}')
         return False
 
 
