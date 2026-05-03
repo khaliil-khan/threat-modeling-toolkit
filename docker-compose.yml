@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports:
+      - '5000:5000'
+    volumes:
+      - ./instance:/app/instance
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - APP_ENV=${APP_ENV}
+      - ADMIN_EMAILS=${ADMIN_EMAILS}
+    restart: unless-stopped
