@@ -9,6 +9,7 @@ import logging
 login_manager = LoginManager()
 csrf = CSRFProtect()
 
+
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
 
@@ -21,23 +22,44 @@ def create_app():
         raise RuntimeError('SECRET_KEY must be set in production.')
 
     app.config['SECRET_KEY'] = secret_key or 'dev-secret-change-in-prod'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///threats.db'
+
+    # Database — configurable via DATABASE_URL env var
+    database_url = os.environ.get('DATABASE_URL', 'sqlite:///threats.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+    # Connection pool settings (relevant for PostgreSQL)
+    if 'postgresql' in database_url:
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_size': 5,
+            'pool_recycle': 300,
+            'max_overflow': 10,
+        }
+    else:
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+        }
+
+    # Session security
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['REMEMBER_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=8)
     app.config['SESSION_COOKIE_SECURE'] = is_production
     app.config['REMEMBER_COOKIE_SECURE'] = is_production
-    app.config['WTF_CSRF_TIME_LIMIT'] = 3600
-    app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
-    
+
+    # CSRF — 30 minute token lifetime
+    app.config['WTF_CSRF_TIME_LIMIT'] = 1800
+
+    # Max upload size
+    app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 MB
+
     # Setup logging
-    if not app.debug:
-        if is_debug:
-            app.logger.setLevel(logging.DEBUG)
-        else:
-            app.logger.setLevel(logging.INFO)
+    if is_debug:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
 
     db.init_app(app)
     csrf.init_app(app)
@@ -57,18 +79,17 @@ def create_app():
     def template_helpers():
         def endpoint_exists(endpoint):
             return endpoint in app.view_functions
-
         return {'endpoint_exists': endpoint_exists}
 
     @app.errorhandler(500)
     def handle_500_error(error):
-        app.logger.error(f'500 Error: {str(error)}', exc_info=error)
-        return {'error': 'Internal Server Error', 'message': str(error)}, 500
+        app.logger.error('500 Error: %s', str(error), exc_info=error)
+        return {'error': 'Internal Server Error'}, 500
 
     @app.errorhandler(404)
     def handle_404_error(error):
-        app.logger.warning(f'404 Error: {str(error)}')
-        return {'error': 'Not Found', 'message': str(error)}, 404
+        app.logger.warning('404 Error: %s', str(error))
+        return {'error': 'Not Found'}, 404
 
     @app.after_request
     def add_security_headers(response):
@@ -76,8 +97,24 @@ def create_app():
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
-        csp = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
-        response.headers['Content-Security-Policy'] = csp
+
+        # Content Security Policy
+        csp_parts = [
+            "default-src 'self'",
+            "script-src 'self' https://cdn.jsdelivr.net",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
+            "font-src 'self' https://fonts.gstatic.com",
+            "img-src 'self' data:",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "frame-ancestors 'self'",
+        ]
+        response.headers['Content-Security-Policy'] = '; '.join(csp_parts)
+
+        # HSTS in production
+        if is_production:
+            response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
         return response
 
     from .auth import auth_bp

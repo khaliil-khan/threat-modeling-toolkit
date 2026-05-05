@@ -100,9 +100,17 @@ function saveCanvas() {
     return;
   }
 
+  // Get CSRF token from meta tag or cookie
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')
+    ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    : '';
+
   fetch(window.dfdSaveUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken
+    },
     body: JSON.stringify({ canvas_json: JSON.stringify(elements) })
   })
   .then(res => {

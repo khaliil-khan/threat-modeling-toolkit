@@ -5,21 +5,25 @@ services:
     build: .
     container_name: threat-toolkit
     ports:
-      - '5000:5000'
-    volumes:
-      - ./app:/app/app
+      - '${PORT:-5000}:5000'
     environment:
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
-      - APP_ENV=${APP_ENV:-development}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
+      - APP_ENV=${APP_ENV:-production}
       - ADMIN_EMAILS=${ADMIN_EMAILS:-}
       - FLASK_APP=wsgi:app
-      - FLASK_ENV=development
-      - FLASK_DEBUG=true
-      # Email Configuration (for password reset notifications)
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
+      # Database — set DATABASE_URL in .env
+      # For AWS RDS: postgresql://user:password@your-rds-endpoint.amazonaws.com:5432/threats_db
+      # For local PG: postgresql://threats_user:threats_pass@db:5432/threats_db
+      - DATABASE_URL=${DATABASE_URL:-postgresql://threats_user:threats_pass@db:5432/threats_db}
+      # Email Configuration
       - SMTP_SERVER=${SMTP_SERVER:-}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SENDER_EMAIL=${SENDER_EMAIL:-}
       - SENDER_PASSWORD=${SENDER_PASSWORD:-}
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - threat-network
@@ -28,7 +32,32 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
+
+  db:
+    image: postgres:16-alpine
+    container_name: threat-toolkit-db
+    environment:
+      - POSTGRES_USER=${DB_USER:-threats_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-threats_pass}
+      - POSTGRES_DB=${DB_NAME:-threats_db}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    restart: unless-stopped
+    networks:
+      - threat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-threats_user} -d ${DB_NAME:-threats_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       start_period: 10s
+
+volumes:
+  pgdata:
+    driver: local
 
 networks:
   threat-network:

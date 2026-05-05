@@ -15,11 +15,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Create instance directory for database
+# Create instance directory for database and set permissions
 RUN mkdir -p /app/instance
+
+# Create non-root user for security
+RUN useradd -r -s /bin/false appuser && \
+    chown -R appuser:appuser /app/instance
+USER appuser
 
 # Expose port
 EXPOSE 5000
 
-# Use app entry point that initializes database
-CMD ["python", "wsgi.py"]
+# Use gunicorn for production
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "wsgi:app"]

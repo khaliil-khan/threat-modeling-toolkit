@@ -2,10 +2,13 @@ from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from itsdangerous import URLSafeTimedSerializer
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+import hashlib
+import secrets
 import os
 
 db = SQLAlchemy()
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -13,12 +16,12 @@ class User(UserMixin, db.Model):
     ROLE_ADMIN = 'admin'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), default=ROLE_USER, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    reset_token = db.Column(db.String(256), nullable=True)
+    reset_token_hash = db.Column(db.String(256), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
     threat_models = db.relationship('ThreatModel', backref='owner', lazy=True)
 
@@ -31,35 +34,49 @@ class User(UserMixin, db.Model):
     def has_role(self, *roles):
         normalized = {role.lower() for role in roles}
         return (self.role or '').lower() in normalized
-    
+
+    @staticmethod
+    def _hash_token(token):
+        """Hash a token for secure storage using SHA-256."""
+        return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
     def generate_reset_token(self):
-        """Generate a password reset token valid for 1 hour"""
+        """Generate a password reset token valid for 1 hour.
+        
+        Returns the raw token (to be sent via email). Only the hash is stored in DB.
+        """
         secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
         serializer = URLSafeTimedSerializer(secret_key)
-        self.reset_token = serializer.dumps(self.email)
+        raw_token = serializer.dumps(self.email, salt='password-reset')
+        self.reset_token_hash = self._hash_token(raw_token)
         self.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
-        return self.reset_token
-    
+        return raw_token
+
     def verify_reset_token(self, token):
-        """Verify reset token and return email if valid"""
-        if not token or not self.reset_token_expiry:
+        """Verify reset token and return email if valid."""
+        if not token or not self.reset_token_hash or not self.reset_token_expiry:
             return None
-        
+
+        # Check expiry FIRST (prevents timing attacks)
         if datetime.utcnow() > self.reset_token_expiry:
-            self.reset_token = None
+            self.reset_token_hash = None
             self.reset_token_expiry = None
             db.session.commit()
             return None
-        
-        if token != self.reset_token:
+
+        # Compare hashes (constant-time via hmac.compare_digest)
+        import hmac
+        token_hash = self._hash_token(token)
+        if not hmac.compare_digest(token_hash, self.reset_token_hash):
             return None
-        
+
+        # Verify token signature
         secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key')
         serializer = URLSafeTimedSerializer(secret_key)
         try:
-            email = serializer.loads(token, max_age=3600)  # 1 hour
+            email = serializer.loads(token, salt='password-reset', max_age=3600)
             return email if email == self.email else None
-        except:
+        except (SignatureExpired, BadSignature):
             return None
 
 class ThreatModel(db.Model):
@@ -70,7 +87,7 @@ class ThreatModel(db.Model):
     methodology = db.Column(db.String(20), default='STRIDE')
     status = db.Column(db.String(20), default='Active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     threats = db.relationship('Threat', backref='model', lazy=True, cascade='all, delete-orphan')
     dfd_data = db.relationship('DFDData', backref='model', uselist=False, cascade='all, delete-orphan')
 
@@ -79,18 +96,18 @@ class Threat(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    stride_category = db.Column(db.String(50))
+    stride_category = db.Column(db.String(50), index=True)
     damage = db.Column(db.Integer, default=1)
     reproducibility = db.Column(db.Integer, default=1)
     exploitability = db.Column(db.Integer, default=1)
     affected_users = db.Column(db.Integer, default=1)
     discoverability = db.Column(db.Integer, default=1)
     dread_score = db.Column(db.Float, default=1.0)
-    risk_level = db.Column(db.String(20), default='Low')
+    risk_level = db.Column(db.String(20), default='Low', index=True)
     countermeasure = db.Column(db.Text)
-    status = db.Column(db.String(20), default='Open')
+    status = db.Column(db.String(20), default='Open', index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    model_id = db.Column(db.Integer, db.ForeignKey('threat_models.id'), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey('threat_models.id'), nullable=False, index=True)
 
     def calculate_dread(self):
         self.dread_score = round((self.damage + self.reproducibility +

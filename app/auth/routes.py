@@ -17,9 +17,11 @@ from email.mime.multipart import MIMEMultipart
 AUTH_RATE_LIMIT_WINDOW_SECONDS = int(os.environ.get('AUTH_RATE_LIMIT_WINDOW_SECONDS', '300'))
 LOGIN_RATE_LIMIT_ATTEMPTS = int(os.environ.get('LOGIN_RATE_LIMIT_ATTEMPTS', '5'))
 REGISTER_RATE_LIMIT_ATTEMPTS = int(os.environ.get('REGISTER_RATE_LIMIT_ATTEMPTS', '5'))
+RESET_RATE_LIMIT_ATTEMPTS = int(os.environ.get('RESET_RATE_LIMIT_ATTEMPTS', '3'))
 
 _login_attempts = defaultdict(deque)
 _register_attempts = defaultdict(deque)
+_reset_attempts = defaultdict(deque)
 
 
 def _client_ip():
@@ -251,8 +253,7 @@ def send_reset_email(user, reset_token):
         
         # Check if SMTP is properly configured
         if not smtp_server or not sender_email or not sender_password:
-            current_app.logger.warning(f'⚠️ Email not sent - SMTP not configured')
-            current_app.logger.info(f'📧 Reset link for {user.email}: {reset_url}')
+            current_app.logger.warning('Email not sent - SMTP not configured. Reset requested for user=%s', user.username)
             return False
         
         try:
@@ -285,21 +286,32 @@ def forgot_password():
     """Request password reset"""
     if current_user.is_authenticated:
         return redirect(_default_post_login_redirect())
-    
+
+    client_ip = _client_ip()
+
+    if request.method == 'POST' and _is_rate_limited(
+        _reset_attempts,
+        client_ip,
+        RESET_RATE_LIMIT_ATTEMPTS,
+        AUTH_RATE_LIMIT_WINDOW_SECONDS,
+    ):
+        current_app.logger.warning('rate_limit password_reset ip=%s', client_ip)
+        flash('Too many reset attempts. Please try again later.', 'warning')
+        return render_template('auth/forgot_password.html', form=ForgotPasswordForm()), 429
+
     form = ForgotPasswordForm()
     if form.validate_on_submit():
+        _record_attempt(_reset_attempts, client_ip, AUTH_RATE_LIMIT_WINDOW_SECONDS)
         user = User.query.filter_by(email=form.email.data).first()
         if user:
             reset_token = user.generate_reset_token()
             db.session.commit()
             send_reset_email(user, reset_token)
-            current_app.logger.info(f'Password reset requested for user={user.username}')
-            flash('Check your email for instructions to reset your password.', 'info')
-        else:
-            # Don't reveal if email exists (security)
-            flash('Check your email for instructions to reset your password.', 'info')
+            current_app.logger.info('Password reset requested for user=%s ip=%s', user.username, client_ip)
+        # Always show same message (don't reveal if email exists)
+        flash('If that email is registered, you will receive reset instructions shortly.', 'info')
         return redirect(url_for('auth.login'))
-    
+
     return render_template('auth/forgot_password.html', form=form)
 
 
@@ -313,7 +325,9 @@ def reset_password(token):
         flash('Invalid or expired reset link.', 'danger')
         return redirect(url_for('auth.login'))
     
-    user = User.query.filter_by(reset_token=token).first()
+    # Find user by comparing token hash
+    token_hash = User._hash_token(token)
+    user = User.query.filter_by(reset_token_hash=token_hash).first()
     if not user:
         flash('Invalid or expired reset link.', 'danger')
         return redirect(url_for('auth.login'))
@@ -325,10 +339,10 @@ def reset_password(token):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         user.set_password(form.password.data)
-        user.reset_token = None
+        user.reset_token_hash = None
         user.reset_token_expiry = None
         db.session.commit()
-        current_app.logger.info(f'Password reset successful for user={user.username}')
+        current_app.logger.info('Password reset successful for user=%s', user.username)
         flash('Your password has been reset! Please log in.', 'success')
         return redirect(url_for('auth.login'))
     

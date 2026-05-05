@@ -1,7 +1,7 @@
 # Originally designed by Waleed Ahmad (Threat Forms with STRIDE/DREAD)
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, IntegerRangeField, SubmitField
-from wtforms.validators import DataRequired, NumberRange, Optional
+from wtforms.validators import DataRequired, NumberRange, Optional, Length
 
 STRIDE_CHOICES = [
     ('Spoofing', 'Spoofing — Impersonating someone/something'),
@@ -28,15 +28,17 @@ DREAD_CHOICES = [
     ('Discoverability', 'Discoverability — Likelihood threat will be discovered'),
 ]
 
+
 class ThreatModelForm(FlaskForm):
-    name = StringField('Model Name', validators=[DataRequired()])
-    description = TextAreaField('Description')
+    name = StringField('Model Name', validators=[DataRequired(), Length(min=1, max=200)])
+    description = TextAreaField('Description', validators=[Length(max=2000)])
     methodology = SelectField('Methodology', choices=[('STRIDE', 'STRIDE'), ('PASTA', 'PASTA'), ('DREAD', 'DREAD')])
     submit = SubmitField('Save Threat Model')
 
+
 class ThreatForm(FlaskForm):
-    title = StringField('Threat Title', validators=[DataRequired()])
-    description = TextAreaField('Description')
+    title = StringField('Threat Title', validators=[DataRequired(), Length(min=1, max=200)])
+    description = TextAreaField('Description', validators=[Length(max=5000)])
     stride_category = SelectField('STRIDE Category', choices=STRIDE_CHOICES, validators=[Optional()], render_kw={'class': 'form-select'})
     # DREAD sliders (1-5)
     damage = IntegerRangeField('Damage', validators=[NumberRange(1, 5)], default=1)
@@ -44,6 +46,6 @@ class ThreatForm(FlaskForm):
     exploitability = IntegerRangeField('Exploitability', validators=[NumberRange(1, 5)], default=1)
     affected_users = IntegerRangeField('Affected Users', validators=[NumberRange(1, 5)], default=1)
     discoverability = IntegerRangeField('Discoverability', validators=[NumberRange(1, 5)], default=1)
-    countermeasure = TextAreaField('Countermeasure / Mitigation')
+    countermeasure = TextAreaField('Countermeasure / Mitigation', validators=[Length(max=5000)])
     status = SelectField('Status', choices=[('Open', 'Open'), ('Mitigated', 'Mitigated'), ('Accepted', 'Accepted')])
     submit = SubmitField('Save Threat')
