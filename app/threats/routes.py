@@ -1,9 +1,10 @@
 # Originally designed by Waleed Ahmad (Threat Management Module)
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from . import threats_bp
 from ..models import db, ThreatModel, Threat
 from .forms import ThreatModelForm, ThreatForm
+from ..utils.threat_analytics import ThreatAnalytics, ThreatFilter, ThreatReporter
 
 # List all threat models for current user
 @threats_bp.route('/')
@@ -79,3 +80,176 @@ def delete_model(model_id):
     db.session.commit()
     flash('Threat model deleted.', 'info')
     return redirect(url_for('threats.list_models'))
+
+
+# ============================================================================
+# ANALYTICS AND REPORTING ENDPOINTS (Added by Waleed Ahmad - May 2026)
+# ============================================================================
+
+@threats_bp.route('/<int:model_id>/analytics')
+@login_required
+def get_analytics(model_id):
+    """Get comprehensive threat analytics for a model"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    analytics = ThreatAnalytics.get_threat_statistics(current_user.id)
+    risk_grouped = ThreatAnalytics.get_threat_by_risk_level(model_id, current_user.id)
+    stride_grouped = ThreatAnalytics.get_threat_by_stride(model_id, current_user.id)
+    
+    return render_template('threats/analytics.html', 
+                         model=model,
+                         analytics=analytics,
+                         risk_grouped=risk_grouped,
+                         stride_grouped=stride_grouped)
+
+
+@threats_bp.route('/<int:model_id>/analytics/json')
+@login_required
+def get_analytics_json(model_id):
+    """Get threat analytics as JSON"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    analytics = ThreatAnalytics.get_threat_statistics(current_user.id)
+    risk_grouped = ThreatAnalytics.get_threat_by_risk_level(model_id, current_user.id)
+    stride_grouped = ThreatAnalytics.get_threat_by_stride(model_id, current_user.id)
+    
+    return jsonify({
+        'model_id': model_id,
+        'model_name': model.name,
+        'analytics': analytics,
+        'risk_distribution': {k: len(v) for k, v in risk_grouped.items()},
+        'stride_distribution': {k: len(v) for k, v in stride_grouped.items()}
+    })
+
+
+@threats_bp.route('/<int:model_id>/search', methods=['GET', 'POST'])
+@login_required
+def search_threats(model_id):
+    """Search and filter threats in a model"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    search_term = request.args.get('q', '')
+    filters = {}
+    
+    # Build filter dictionary from query parameters
+    if request.args.get('risk_level'):
+        filters['risk_level'] = request.args.getlist('risk_level')
+    if request.args.get('status'):
+        filters['status'] = request.args.getlist('status')
+    if request.args.get('stride_category'):
+        filters['stride_category'] = request.args.getlist('stride_category')
+    if request.args.get('min_dread'):
+        try:
+            filters['min_dread_score'] = float(request.args.get('min_dread'))
+        except ValueError:
+            pass
+    if request.args.get('max_dread'):
+        try:
+            filters['max_dread_score'] = float(request.args.get('max_dread'))
+        except ValueError:
+            pass
+    
+    threats = ThreatFilter.search_threats(model_id, current_user.id, search_term, filters)
+    
+    return render_template('threats/search_results.html',
+                         model=model,
+                         threats=threats,
+                         search_term=search_term,
+                         filters=filters)
+
+
+@threats_bp.route('/<int:model_id>/filter', methods=['POST'])
+@login_required
+def filter_threats(model_id):
+    """Filter threats via POST request (returns JSON)"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    filters = request.get_json() or {}
+    query = Threat.query.filter_by(model_id=model_id)
+    filtered_threats = ThreatFilter.filter_threats(query, filters).all()
+    
+    return jsonify({
+        'count': len(filtered_threats),
+        'threats': [
+            {
+                'id': t.id,
+                'title': t.title,
+                'risk_level': t.risk_level,
+                'dread_score': t.dread_score,
+                'status': t.status,
+                'stride_category': t.stride_category
+            }
+            for t in filtered_threats
+        ]
+    })
+
+
+@threats_bp.route('/<int:model_id>/report/json')
+@login_required
+def export_report_json(model_id):
+    """Export threat model as JSON report"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    report = ThreatReporter.generate_json_report(model_id, current_user.id)
+    if not report:
+        abort(403)
+    
+    return jsonify({'report': report})
+
+
+@threats_bp.route('/<int:model_id>/report/text')
+@login_required
+def export_report_text(model_id):
+    """Export threat model as text report"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    report = ThreatReporter.generate_summary_report(model_id, current_user.id)
+    if not report:
+        abort(403)
+    
+    return report, 200, {'Content-Type': 'text/plain', 'Content-Disposition': f'attachment; filename="threat_report_{model_id}.txt"'}
+
+
+@threats_bp.route('/<int:model_id>/report/download')
+@login_required
+def download_report(model_id):
+    """Download comprehensive threat report"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    report = ThreatReporter.generate_summary_report(model_id, current_user.id)
+    if not report:
+        abort(403)
+    
+    from flask import send_file
+    from io import BytesIO
+    
+    report_bytes = BytesIO(report.encode('utf-8'))
+    report_bytes.seek(0)
+    
+    return send_file(
+        report_bytes,
+        mimetype='text/plain',
+        as_attachment=True,
+        download_name=f'threat_report_{model_id}_{ThreatReporter._get_timestamp()}.txt'
+    )
+
+
+# Helper method for timestamped reports
+def _get_report_timestamp():
+    """Get formatted timestamp for report filenames"""
+    from datetime import datetime
+    return datetime.utcnow().strftime('%Y%m%d_%H%M%S')

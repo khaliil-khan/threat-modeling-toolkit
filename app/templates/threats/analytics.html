@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1>Threat Analytics Dashboard</h1>
+            <p class="text-muted">Model: <strong>{{ model.name }}</strong></p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Threats</h5>
+                    <h2 class="text-primary">{{ analytics.total_threats }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger bg-opacity-10">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Critical</h5>
+                    <h2 class="text-danger">{{ analytics.critical_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning bg-opacity-10">
+                <div class="card-body text-center">
+                    <h5 class="card-title">High</h5>
+                    <h2 class="text-warning">{{ analytics.high_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info bg-opacity-10">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Avg DREAD Score</h5>
+                    <h2 class="text-info">{{ analytics.avg_dread_score }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Distribution -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Risk Level Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Distribution -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Threat Status</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Open
+                            <span class="badge bg-danger rounded-pill">{{ analytics.open_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            In Progress
+                            <span class="badge bg-warning rounded-pill">{{ analytics.in_progress_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Closed
+                            <span class="badge bg-success rounded-pill">{{ analytics.closed_count }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STRIDE Category Breakdown -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Threats by STRIDE Category</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category, threats in stride_grouped.items() %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-left border-primary">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ category }}</h6>
+                                    <p class="card-text">
+                                        <span class="badge bg-primary">{{ threats|length }} threats</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{{ url_for('threats.search_threats', model_id=model.id) }}" class="btn btn-primary">
+                <i class="fas fa-search"></i> Search & Filter Threats
+            </a>
+            <a href="{{ url_for('threats.export_report_json', model_id=model.id) }}" class="btn btn-info">
+                <i class="fas fa-file-download"></i> Export as JSON
+            </a>
+            <a href="{{ url_for('threats.export_report_text', model_id=model.id) }}" class="btn btn-secondary">
+                <i class="fas fa-file-alt"></i> Export as Text
+            </a>
+            <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Model
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Risk Level Chart
+    const ctx = document.getElementById('riskChart').getContext('2d');
+    const riskChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Critical', 'High', 'Medium', 'Low'],
+            datasets: [{
+                data: [
+                    {{ analytics.critical_count }},
+                    {{ analytics.high_count }},
+                    {{ analytics.medium_count }},
+                    {{ analytics.low_count }}
+                ],
+                backgroundColor: [
+                    'rgba(220, 53, 69, 0.7)',
+                    'rgba(255, 193, 7, 0.7)',
+                    'rgba(23, 162, 184, 0.7)',
+                    'rgba(40, 167, 69, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(220, 53, 69, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(23, 162, 184, 1)',
+                    'rgba(40, 167, 69, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        border: none;
+    }
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    .border-left {
+        border-left: 4px solid !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1>Search & Filter Threats</h1>
+            <p class="text-muted">Model: <strong>{{ model.name }}</strong></p>
+            <hr>
+        </div>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Filter Threats</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="searchInput" class="form-label">Search by Title or Description</label>
+                            <input type="text" class="form-control" id="searchInput" name="q" 
+                                   value="{{ search_term }}" placeholder="Enter search term...">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="riskFilter" class="form-label">Risk Level</label>
+                            <select class="form-select" id="riskFilter" name="risk_level" multiple>
+                                <option value="Critical" {% if 'Critical' in filters.get('risk_level', []) %}selected{% endif %}>Critical</option>
+                                <option value="High" {% if 'High' in filters.get('risk_level', []) %}selected{% endif %}>High</option>
+                                <option value="Medium" {% if 'Medium' in filters.get('risk_level', []) %}selected{% endif %}>Medium</option>
+                                <option value="Low" {% if 'Low' in filters.get('risk_level', []) %}selected{% endif %}>Low</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="statusFilter" class="form-label">Status</label>
+                            <select class="form-select" id="statusFilter" name="status" multiple>
+                                <option value="Open" {% if 'Open' in filters.get('status', []) %}selected{% endif %}>Open</option>
+                                <option value="In Progress" {% if 'In Progress' in filters.get('status', []) %}selected{% endif %}>In Progress</option>
+                                <option value="Closed" {% if 'Closed' in filters.get('status', []) %}selected{% endif %}>Closed</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="strideFilter" class="form-label">STRIDE Category</label>
+                            <select class="form-select" id="strideFilter" name="stride_category" multiple>
+                                <option value="Spoofing">Spoofing</option>
+                                <option value="Tampering">Tampering</option>
+                                <option value="Repudiation">Repudiation</option>
+                                <option value="Information Disclosure">Information Disclosure</option>
+                                <option value="Denial of Service">Denial of Service</option>
+                                <option value="Elevation of Privilege">Elevation of Privilege</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="minDread" class="form-label">Min DREAD Score</label>
+                            <input type="number" class="form-control" id="minDread" name="min_dread" 
+                                   step="0.1" min="1" max="5" value="{{ filters.get('min_dread', '') }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="maxDread" class="form-label">Max DREAD Score</label>
+                            <input type="number" class="form-control" id="maxDread" name="max_dread" 
+                                   step="0.1" min="1" max="5" value="{{ filters.get('max_dread', '') }}">
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Apply Filters
+                            </button>
+                            <a href="{{ url_for('threats.search_threats', model_id=model.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Results ({{ threats|length }} found)</h5>
+                    {% if search_term or filters %}
+                    <small class="text-muted">Filtering active</small>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if threats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>STRIDE</th>
+                                    <th>Risk Level</th>
+                                    <th>DREAD Score</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for threat in threats %}
+                                <tr>
+                                    <td><strong>{{ threat.title }}</strong></td>
+                                    <td><span class="badge bg-info">{{ threat.stride_category }}</span></td>
+                                    <td>
+                                        {% if threat.risk_level == 'Critical' %}
+                                            <span class="badge bg-danger">{{ threat.risk_level }}</span>
+                                        {% elif threat.risk_level == 'High' %}
+                                            <span class="badge bg-warning">{{ threat.risk_level }}</span>
+                                        {% elif threat.risk_level == 'Medium' %}
+                                            <span class="badge bg-info">{{ threat.risk_level }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success">{{ threat.risk_level }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ threat.dread_score }}</td>
+                                    <td>{{ threat.status }}</td>
+                                    <td>{{ threat.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('threats.model_detail', model_id=model.id, _anchor=threat.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        No threats found matching the current filters.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{{ url_for('threats.get_analytics', model_id=model.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-chart-bar"></i> Back to Analytics
+            </a>
+            <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Model
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+        border: none;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.025);
+    }
+</style>
+{% endblock %}
