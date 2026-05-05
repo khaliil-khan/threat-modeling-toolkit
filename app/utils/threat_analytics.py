@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import func, and_, or_
 from ..models import Threat, ThreatModel
 import json
+import csv
+from io import StringIO
 
 class ThreatAnalytics:
     """Handle threat analytics and statistical analysis"""
@@ -342,3 +344,117 @@ class ThreatReporter:
         report_lines.append("=" * 60)
         
         return "\n".join(report_lines)
+    
+    @staticmethod
+    def generate_csv_export(model_id, user_id):
+        """
+        Generate CSV export of threat data
+        
+        Args:
+            model_id: Threat model ID
+            user_id: User ID for authorization
+        
+        Returns:
+            CSV formatted string
+        """
+        model = ThreatModel.query.get_or_404(model_id)
+        if model.user_id != user_id:
+            return None
+        
+        threats = Threat.query.filter_by(model_id=model_id).all()
+        
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow([
+            'ID', 'Title', 'Description', 'STRIDE Category', 'Status',
+            'Risk Level', 'DREAD Score', 'Damage', 'Reproducibility',
+            'Exploitability', 'Affected Users', 'Discoverability',
+            'Countermeasure', 'Created Date'
+        ])
+        
+        # Write threat rows
+        for threat in threats:
+            writer.writerow([
+                threat.id,
+                threat.title,
+                threat.description or '',
+                threat.stride_category or '',
+                threat.status,
+                threat.risk_level,
+                threat.dread_score,
+                threat.damage,
+                threat.reproducibility,
+                threat.exploitability,
+                threat.affected_users,
+                threat.discoverability,
+                threat.countermeasure or '',
+                threat.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            ])
+        
+        return output.getvalue()
+    
+    @staticmethod
+    def generate_executive_summary(model_id, user_id):
+        """
+        Generate an executive summary for stakeholders
+        
+        Args:
+            model_id: Threat model ID
+            user_id: User ID for authorization
+        
+        Returns:
+            Executive summary report as string
+        """
+        model = ThreatModel.query.get_or_404(model_id)
+        if model.user_id != user_id:
+            return None
+        
+        threats = Threat.query.filter_by(model_id=model_id).all()
+        
+        # Calculate metrics
+        critical_threats = [t for t in threats if t.risk_level == 'Critical']
+        high_threats = [t for t in threats if t.risk_level == 'High']
+        avg_score = sum(t.dread_score for t in threats) / len(threats) if threats else 0
+        
+        report = []
+        report.append("=" * 70)
+        report.append(f"EXECUTIVE SUMMARY - {model.name.upper()}")
+        report.append("=" * 70)
+        report.append(f"Generated: {datetime.utcnow().strftime('%B %d, %Y at %I:%M %p UTC')}")
+        report.append("")
+        
+        report.append("RISK OVERVIEW")
+        report.append("-" * 70)
+        report.append(f"Total Threats Identified: {len(threats)}")
+        report.append(f"Critical Threats: {len(critical_threats)} ⚠️")
+        report.append(f"High Risk Threats: {len(high_threats)}")
+        report.append(f"Average DREAD Score: {avg_score:.2f}/5.0")
+        report.append("")
+        
+        if critical_threats:
+            report.append("CRITICAL THREATS REQUIRING IMMEDIATE ATTENTION")
+            report.append("-" * 70)
+            for i, threat in enumerate(critical_threats[:5], 1):
+                report.append(f"{i}. {threat.title}")
+                report.append(f"   DREAD Score: {threat.dread_score} | Category: {threat.stride_category}")
+                report.append(f"   Status: {threat.status}")
+                if threat.countermeasure:
+                    report.append(f"   Countermeasure: {threat.countermeasure[:100]}...")
+                report.append("")
+        
+        report.append("RECOMMENDATIONS")
+        report.append("-" * 70)
+        if critical_threats:
+            report.append(f"1. Immediately address all {len(critical_threats)} critical threats")
+            report.append("2. Develop mitigation strategies for high-risk threats")
+            report.append("3. Implement monitoring for threat status tracking")
+        else:
+            report.append("1. Continue monitoring identified threats")
+            report.append("2. Regular review of threat landscape")
+        
+        report.append("")
+        report.append("=" * 70)
+        
+        return "\n".join(report)

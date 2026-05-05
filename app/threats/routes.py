@@ -248,6 +248,47 @@ def download_report(model_id):
     )
 
 
+@threats_bp.route('/<int:model_id>/export/csv')
+@login_required
+def export_csv(model_id):
+    """Export threat model as CSV"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    csv_data = ThreatReporter.generate_csv_export(model_id, current_user.id)
+    if not csv_data:
+        abort(403)
+    
+    from flask import send_file
+    from io import BytesIO
+    
+    csv_bytes = BytesIO(csv_data.encode('utf-8'))
+    csv_bytes.seek(0)
+    
+    return send_file(
+        csv_bytes,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'threats_{model_id}_{_get_report_timestamp()}.csv'
+    )
+
+
+@threats_bp.route('/<int:model_id>/report/executive-summary')
+@login_required
+def executive_summary(model_id):
+    """Get executive summary report"""
+    model = ThreatModel.query.get_or_404(model_id)
+    if model.user_id != current_user.id:
+        abort(403)
+    
+    summary = ThreatReporter.generate_executive_summary(model_id, current_user.id)
+    if not summary:
+        abort(403)
+    
+    return summary, 200, {'Content-Type': 'text/plain'}
+
+
 # Helper method for timestamped reports
 def _get_report_timestamp():
     """Get formatted timestamp for report filenames"""
