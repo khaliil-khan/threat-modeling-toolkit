@@ -1,42 +1,143 @@
 {% extends "base.html" %}
-{% block content %}
-<h2>DFD Builder - {{ model.name }}</h2>
-<div class="mb-3">
-  <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-secondary">Back to Model</a>
-  <button onclick="addElement('process')" class="btn btn-outline-primary">Add Process</button>
-  <button onclick="addElement('datastore')" class="btn btn-outline-primary">Add Data Store</button>
-  <button onclick="addElement('external')" class="btn btn-outline-primary">Add External Entity</button>
-  <button onclick="addElement('flow')" class="btn btn-outline-primary">Add Data Flow</button>
-  <button onclick="saveCanvas()" class="btn btn-success">💾 Save DFD</button>
-</div>
-<canvas id="dfdCanvas" width="800" height="500" class="border"></canvas>
+{% block title %}DFD Editor - {{ model.name }}{% endblock %}
+{% block head_extra %}
+<style>
+  .dfd-toolbar {
+    background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.85) 100%);
+    border: 1px solid rgba(100,116,139,0.25);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .dfd-toolbar .btn {
+    font-size: 0.82rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 0.5rem;
+  }
+  .dfd-toolbar .separator {
+    width: 1px;
+    height: 28px;
+    background: rgba(100,116,139,0.4);
+    margin: 0 0.25rem;
+  }
+  .dfd-canvas-wrap {
+    border: 1px solid rgba(100,116,139,0.3);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  #dfdCanvas {
+    display: block;
+    width: 100%;
+    cursor: default;
+  }
+  .dfd-help {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+    margin-top: 0.75rem;
+  }
+  .dfd-help kbd {
+    background: rgba(100,116,139,0.3);
+    border: 1px solid rgba(100,116,139,0.4);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.75rem;
+  }
+</style>
 {% endblock %}
+
+{% block content %}
+<div class="py-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h2 class="fw-bold mb-1">DFD Editor</h2>
+      <p class="text-medium-emphasis mb-0">{{ model.name }} — Data Flow Diagram</p>
+    </div>
+    <a href="{{ url_for('threats.model_detail', model_id=model.id) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="cil-arrow-left me-1"></i>Back to Model
+    </a>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="dfd-toolbar">
+    <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Elements:</span>
+    <button onclick="dfdEditor.addElement('process')" class="btn btn-outline-primary" title="Add Process (circle)">
+      <i class="cil-circle me-1"></i>Process
+    </button>
+    <button onclick="dfdEditor.addElement('datastore')" class="btn btn-outline-success" title="Add Data Store (parallel lines)">
+      <i class="cil-storage me-1"></i>Data Store
+    </button>
+    <button onclick="dfdEditor.addElement('external')" class="btn btn-outline-warning" title="Add External Entity (rectangle)">
+      <i class="cil-user me-1"></i>External Entity
+    </button>
+    <button onclick="dfdEditor.addElement('trustBoundary')" class="btn btn-outline-info" title="Add Trust Boundary (dashed box)">
+      <i class="cil-border-all me-1"></i>Trust Boundary
+    </button>
+
+    <div class="separator"></div>
+
+    <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Connect:</span>
+    <button onclick="dfdEditor.startConnection()" class="btn btn-outline-danger" title="Draw data flow between two elements">
+      <i class="cil-arrow-right me-1"></i>Add Flow
+    </button>
+
+    <div class="separator"></div>
+
+    <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Actions:</span>
+    <button onclick="dfdEditor.deleteSelected()" class="btn btn-outline-secondary" title="Delete selected element">
+      <i class="cil-trash me-1"></i>Delete
+    </button>
+    <button onclick="dfdEditor.undo()" class="btn btn-outline-secondary" title="Undo (Ctrl+Z)">
+      <i class="cil-action-undo me-1"></i>Undo
+    </button>
+    <button onclick="dfdEditor.redo()" class="btn btn-outline-secondary" title="Redo (Ctrl+Y)">
+      <i class="cil-action-redo me-1"></i>Redo
+    </button>
+    <button onclick="dfdEditor.clearAll()" class="btn btn-outline-secondary" title="Clear entire diagram">
+      <i class="cil-x-circle me-1"></i>Clear
+    </button>
+
+    <div class="ms-auto">
+      <button onclick="dfdEditor.saveCanvas()" class="btn btn-success" title="Save diagram">
+        <i class="cil-save me-1"></i>Save DFD
+      </button>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="dfd-canvas-wrap">
+    <canvas id="dfdCanvas" width="900" height="550"></canvas>
+  </div>
+
+  <!-- Help text -->
+  <div class="dfd-help">
+    <strong>Tips:</strong>
+    Drag elements to move them.
+    <kbd>Double-click</kbd> to rename.
+    <kbd>Delete</kbd> to remove selected.
+    <kbd>Ctrl+Z</kbd> undo, <kbd>Ctrl+Y</kbd> redo.
+    <kbd>Esc</kbd> to cancel flow or deselect.
+    Click "Add Flow", then click source element, then click target element to connect.
+  </div>
+</div>
+{% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dfd_editor.js') }}"></script>
 <script>
-  // Ensure canvas is initialized when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      initializeCanvas();
-      loadSavedDFD();
-    });
-  } else {
-    // DOM is already loaded
-    initializeCanvas();
-    loadSavedDFD();
-  }
-  
-  function loadSavedDFD() {
+  document.addEventListener('DOMContentLoaded', function() {
+    dfdEditor.init();
     window.dfdSaveUrl = "{{ url_for('dfd.save_dfd', model_id=model.id) }}";
-    let savedJSON = {{ (model.dfd_data.canvas_json if model.dfd_data else '{}') | tojson }};
+
+    // Load saved DFD data
+    var savedJSON = {{ (model.dfd_data.canvas_json if model.dfd_data else '{}') | tojson }};
     if (savedJSON && savedJSON !== '{}') {
-      try {
-        elements = JSON.parse(savedJSON);
-        drawAll();
-      } catch (e) {
-        console.error('Error loading saved DFD:', e);
-      }
+      dfdEditor.loadFromJSON(savedJSON);
     }
-  }
+  });
 </script>
 {% endblock %}
