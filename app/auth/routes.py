@@ -110,7 +110,7 @@ def register():
             for email in os.environ.get('ADMIN_EMAILS', '').split(',')
             if email.strip()
         }
-        role = 'admin' if form.email.data in admin_emails else 'user'
+        role = 'admin' if form.email.data.strip().lower() in admin_emails else 'user'
         user = User(username=form.username.data, email=form.email.data, role=role)
         user.set_password(form.password.data)
         db.session.add(user)
