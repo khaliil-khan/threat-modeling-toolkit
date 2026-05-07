@@ -132,7 +132,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
     // Risk Level Chart
     const ctx = document.getElementById('riskChart').getContext('2d');
     const riskChart = new Chart(ctx, {
