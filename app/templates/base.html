@@ -26,6 +26,9 @@
       <li class="nav-item"><a class="nav-link" href="{{ url_for('threats.list_models') }}" title="View threat models"><i class="cil-shield-alt"></i> Threat Models</a></li>
       {% if current_user.is_authenticated %}
       <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.profile') }}" title="View your profile"><i class="cil-user"></i> My Profile</a></li>
+      {% if current_user.has_role('admin') %}
+      <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.admin_users') }}" title="Manage users"><i class="cil-people"></i> Manage Users</a></li>
+      {% endif %}
       <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.logout') }}" title="Sign out"><i class="cil-account-logout"></i> Logout</a></li>
       {% else %}
       <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}" title="Sign in"><i class="cil-account-logout"></i> Login</a></li>
