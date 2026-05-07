@@ -120,9 +120,15 @@ def create_app():
             "img-src 'self' data:",
             "object-src 'none'",
             "base-uri 'self'",
+            "form-action 'self'",
             "frame-ancestors 'self'",
         ]
         response.headers['Content-Security-Policy'] = '; '.join(csp_parts)
+
+        # Prevent caching of HTML responses (sensitive content)
+        if 'text/html' in response.content_type:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            response.headers['Pragma'] = 'no-cache'
 
         # HSTS in production
         if is_production:
