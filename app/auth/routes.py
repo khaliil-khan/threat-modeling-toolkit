@@ -253,8 +253,11 @@ def send_reset_email(user, reset_token):
         
         # Check if SMTP is properly configured
         if not smtp_server or not sender_email or not sender_password:
-            current_app.logger.warning('Email not sent - SMTP not configured. Reset requested for user=%s', user.username)
-            return False
+            current_app.logger.info(
+                'SMTP not configured. Password reset link for user=%s: %s',
+                user.username, reset_url
+            )
+            return 'logged'
         
         try:
             smtp_port = int(smtp_port)
@@ -306,7 +309,9 @@ def forgot_password():
         if user:
             reset_token = user.generate_reset_token()
             db.session.commit()
-            send_reset_email(user, reset_token)
+            result = send_reset_email(user, reset_token)
+            if result is False:
+                current_app.logger.warning('Email delivery failed for user=%s ip=%s', user.username, client_ip)
             current_app.logger.info('Password reset requested for user=%s ip=%s', user.username, client_ip)
         # Always show same message (don't reveal if email exists)
         flash('If that email is registered, you will receive reset instructions shortly.', 'info')
@@ -347,3 +352,33 @@ def reset_password(token):
         return redirect(url_for('auth.login'))
     
     return render_template('auth/reset_password.html', form=form, token=token)
+
+
+def validate_smtp_config(app):
+    """Log SMTP configuration status at startup."""
+    smtp_server = os.environ.get('SMTP_SERVER', '').strip()
+    sender_email = os.environ.get('SENDER_EMAIL', '').strip()
+    sender_password = os.environ.get('SENDER_PASSWORD', '').strip()
+    smtp_port = os.environ.get('SMTP_PORT', '587').strip()
+
+    configured = [smtp_server, sender_email, sender_password]
+
+    if not any(configured):
+        app.logger.info('SMTP not configured. Email is disabled; console fallback will be used for password resets.')
+        return
+
+    missing = []
+    if not smtp_server:
+        missing.append('SMTP_SERVER')
+    if not sender_email:
+        missing.append('SENDER_EMAIL')
+    if not sender_password:
+        missing.append('SENDER_PASSWORD')
+
+    if missing:
+        app.logger.warning('SMTP partially configured. Missing variables: %s', ', '.join(missing))
+
+    try:
+        int(smtp_port)
+    except ValueError:
+        app.logger.error('SMTP_PORT contains non-numeric value: %s. SMTP will be treated as unconfigured.', smtp_port)
