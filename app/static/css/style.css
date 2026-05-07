@@ -110,7 +110,6 @@ html {
   font-weight: 600;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), filter var(--transition-fast), background-color var(--transition-normal), border-color var(--transition-normal);
   letter-spacing: 0.3px;
-  border: none;
   padding: 0.5rem 1rem;
   position: relative;
   overflow: hidden;
@@ -159,6 +158,32 @@ html {
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
 }
+
+/* Ensure outline buttons have visible borders */
+.btn-outline-primary,
+.btn-outline-secondary,
+.btn-outline-success,
+.btn-outline-danger,
+.btn-outline-warning,
+.btn-outline-info {
+  background: transparent;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.btn-outline-primary { border-color: #3b82f6; color: #3b82f6; }
+.btn-outline-secondary { border-color: #94a3b8; color: #94a3b8; }
+.btn-outline-success { border-color: #22c55e; color: #22c55e; }
+.btn-outline-danger { border-color: #ef4444; color: #ef4444; }
+.btn-outline-warning { border-color: #f59e0b; color: #f59e0b; }
+.btn-outline-info { border-color: #06b6d4; color: #06b6d4; }
+
+.btn-outline-primary:hover { background: #3b82f6; color: #fff; }
+.btn-outline-secondary:hover { background: #94a3b8; color: #fff; }
+.btn-outline-success:hover { background: #22c55e; color: #fff; }
+.btn-outline-danger:hover { background: #ef4444; color: #fff; }
+.btn-outline-warning:hover { background: #f59e0b; color: #fff; }
+.btn-outline-info:hover { background: #06b6d4; color: #fff; }
 
 .btn:focus-visible,
 .form-control:focus,
@@ -251,6 +276,24 @@ html {
 
 .sidebar {
   border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Ensure main content is not hidden behind the fixed sidebar */
+.sidebar-fixed ~ .wrapper {
+  margin-left: 256px;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-fixed ~ .wrapper {
+    margin-left: 0;
+  }
+  .sidebar {
+    margin-left: -256px;
+    transition: margin-left 0.3s ease;
+  }
+  .sidebar.show {
+    margin-left: 0;
+  }
 }
 
 .sidebar .nav-link {

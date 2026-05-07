@@ -5,6 +5,7 @@ import os
 import secrets
 from datetime import timedelta
 from flask_wtf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 import logging
 
 login_manager = LoginManager()
@@ -13,6 +14,9 @@ csrf = CSRFProtect()
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
+
+    # Trust reverse proxy headers (Nginx/ALB) so Flask knows about HTTPS
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     app_env = os.environ.get('APP_ENV', 'development').lower()
     is_production = app_env == 'production'
