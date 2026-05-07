@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, g
 from flask_login import LoginManager
 from .models import db, User
 import os
+import secrets
 from datetime import timedelta
 from flask_wtf import CSRFProtect
 import logging
@@ -75,6 +76,14 @@ def create_app():
         except (TypeError, ValueError):
             return None
 
+    @app.before_request
+    def generate_csp_nonce():
+        g.csp_nonce = secrets.token_urlsafe(16)
+
+    @app.context_processor
+    def inject_csp_nonce():
+        return {'csp_nonce': getattr(g, 'csp_nonce', '')}
+
     @app.context_processor
     def template_helpers():
         def endpoint_exists(endpoint):
@@ -101,7 +110,7 @@ def create_app():
         # Content Security Policy
         csp_parts = [
             "default-src 'self'",
-            "script-src 'self' https://cdn.jsdelivr.net",
+            f"script-src 'self' 'nonce-{getattr(g, 'csp_nonce', '')}' https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net",
             "font-src 'self' https://fonts.gstatic.com",
             "img-src 'self' data:",
@@ -131,5 +140,9 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+
+    # Validate SMTP configuration at startup
+    from .auth.routes import validate_smtp_config
+    validate_smtp_config(app)
 
     return app

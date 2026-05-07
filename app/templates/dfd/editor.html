@@ -65,44 +65,44 @@
   <!-- Toolbar -->
   <div class="dfd-toolbar">
     <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Elements:</span>
-    <button onclick="dfdEditor.addElement('process')" class="btn btn-outline-primary" title="Add Process (circle)">
+    <button data-action="add-element" data-element-type="process" class="btn btn-outline-primary" title="Add Process (circle)">
       <i class="cil-circle me-1"></i>Process
     </button>
-    <button onclick="dfdEditor.addElement('datastore')" class="btn btn-outline-success" title="Add Data Store (parallel lines)">
+    <button data-action="add-element" data-element-type="datastore" class="btn btn-outline-success" title="Add Data Store (parallel lines)">
       <i class="cil-storage me-1"></i>Data Store
     </button>
-    <button onclick="dfdEditor.addElement('external')" class="btn btn-outline-warning" title="Add External Entity (rectangle)">
+    <button data-action="add-element" data-element-type="external" class="btn btn-outline-warning" title="Add External Entity (rectangle)">
       <i class="cil-user me-1"></i>External Entity
     </button>
-    <button onclick="dfdEditor.addElement('trustBoundary')" class="btn btn-outline-info" title="Add Trust Boundary (dashed box)">
+    <button data-action="add-element" data-element-type="trustBoundary" class="btn btn-outline-info" title="Add Trust Boundary (dashed box)">
       <i class="cil-border-all me-1"></i>Trust Boundary
     </button>
 
     <div class="separator"></div>
 
     <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Connect:</span>
-    <button onclick="dfdEditor.startConnection()" class="btn btn-outline-danger" title="Draw data flow between two elements">
+    <button data-action="start-connection" class="btn btn-outline-danger" title="Draw data flow between two elements">
       <i class="cil-arrow-right me-1"></i>Add Flow
     </button>
 
     <div class="separator"></div>
 
     <span class="text-soft me-2" style="font-size:0.78rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Actions:</span>
-    <button onclick="dfdEditor.deleteSelected()" class="btn btn-outline-secondary" title="Delete selected element">
+    <button data-action="delete-selected" class="btn btn-outline-secondary" title="Delete selected element">
       <i class="cil-trash me-1"></i>Delete
     </button>
-    <button onclick="dfdEditor.undo()" class="btn btn-outline-secondary" title="Undo (Ctrl+Z)">
+    <button data-action="undo" class="btn btn-outline-secondary" title="Undo (Ctrl+Z)">
       <i class="cil-action-undo me-1"></i>Undo
     </button>
-    <button onclick="dfdEditor.redo()" class="btn btn-outline-secondary" title="Redo (Ctrl+Y)">
+    <button data-action="redo" class="btn btn-outline-secondary" title="Redo (Ctrl+Y)">
       <i class="cil-action-redo me-1"></i>Redo
     </button>
-    <button onclick="dfdEditor.clearAll()" class="btn btn-outline-secondary" title="Clear entire diagram">
+    <button data-action="clear-all" class="btn btn-outline-secondary" title="Clear entire diagram">
       <i class="cil-x-circle me-1"></i>Clear
     </button>
 
     <div class="ms-auto">
-      <button onclick="dfdEditor.saveCanvas()" class="btn btn-success" title="Save diagram">
+      <button data-action="save-canvas" class="btn btn-success" title="Save diagram">
         <i class="cil-save me-1"></i>Save DFD
       </button>
     </div>
@@ -128,7 +128,7 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dfd_editor.js') }}"></script>
-<script>
+<script nonce="{{ csp_nonce }}">
   document.addEventListener('DOMContentLoaded', function() {
     dfdEditor.init();
     window.dfdSaveUrl = "{{ url_for('dfd.save_dfd', model_id=model.id) }}";

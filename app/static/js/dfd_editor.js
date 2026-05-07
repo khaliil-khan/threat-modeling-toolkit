@@ -58,6 +58,7 @@
     ctx = canvas.getContext('2d');
     resizeCanvas();
     bindEvents();
+    bindToolbarEvents();
     drawAll();
     return true;
   }
@@ -78,6 +79,42 @@
     window.addEventListener('resize', function () {
       resizeCanvas();
       drawAll();
+    });
+  }
+
+  // ─── Toolbar Event Delegation ──────────────────────────────────────────
+  function bindToolbarEvents() {
+    var toolbar = document.querySelector('.dfd-toolbar');
+    if (!toolbar) return;
+
+    toolbar.addEventListener('click', function(e) {
+      var button = e.target.closest('[data-action]');
+      if (!button) return;
+
+      var action = button.getAttribute('data-action');
+      switch (action) {
+        case 'add-element':
+          addElement(button.getAttribute('data-element-type'));
+          break;
+        case 'start-connection':
+          startConnection();
+          break;
+        case 'delete-selected':
+          deleteSelected();
+          break;
+        case 'undo':
+          undo();
+          break;
+        case 'redo':
+          redo();
+          break;
+        case 'clear-all':
+          clearAll();
+          break;
+        case 'save-canvas':
+          saveCanvas();
+          break;
+      }
     });
   }
 
