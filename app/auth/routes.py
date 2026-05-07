@@ -184,6 +184,48 @@ def admin_users():
     return render_template('auth/admin_users.html', users=users)
 
 
+@auth_bp.route('/admin/users/<int:user_id>')
+@roles_required('admin')
+def admin_user_detail(user_id):
+    """View a user's profile and their threat models."""
+    user = User.query.get_or_404(user_id)
+    from ..models import ThreatModel
+    models = ThreatModel.query.filter_by(user_id=user.id).order_by(ThreatModel.created_at.desc()).all()
+    return render_template('auth/admin_user_detail.html', target_user=user, models=models)
+
+
+@auth_bp.route('/admin/users/<int:user_id>/toggle-role', methods=['POST'])
+@roles_required('admin')
+def admin_toggle_role(user_id):
+    """Toggle a user's role between 'user' and 'admin'."""
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot change your own role.', 'warning')
+        return redirect(url_for('auth.admin_users'))
+    old_role = user.role
+    user.role = 'admin' if user.role == 'user' else 'user'
+    db.session.commit()
+    current_app.logger.info('admin role_change user=%s old=%s new=%s by=%s', user.username, old_role, user.role, current_user.username)
+    flash(f'{user.username} is now {user.role}.', 'success')
+    return redirect(url_for('auth.admin_users'))
+
+
+@auth_bp.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+@roles_required('admin')
+def admin_delete_user(user_id):
+    """Delete a user and all their data."""
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
+        flash('You cannot delete your own account.', 'warning')
+        return redirect(url_for('auth.admin_users'))
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    current_app.logger.info('admin user_deleted user=%s by=%s', username, current_user.username)
+    flash(f'User "{username}" and all their data have been deleted.', 'success')
+    return redirect(url_for('auth.admin_users'))
+
+
 def send_reset_email(user, reset_token):
     """Send password reset email to user"""
     try:

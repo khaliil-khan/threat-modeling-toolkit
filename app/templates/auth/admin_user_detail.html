@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ target_user.username }} - User Detail{% endblock %}
+{% block content %}
+<div class="py-2 py-md-3">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="fw-bold mb-1 fs-2"><i class="cil-user me-2"></i>{{ target_user.username }}</h1>
+      <p class="mb-0 text-medium-emphasis">User profile and activity overview</p>
+    </div>
+    <a href="{{ url_for('auth.admin_users') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="cil-arrow-left me-1"></i>Back to Users
+    </a>
+  </div>
+
+  <!-- User Info Card -->
+  <div class="card border-0 shadow-sm mb-4 reveal-item">
+    <div class="card-header">
+      <h5 class="mb-0"><i class="cil-contact me-2"></i>Account Information</h5>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="profile-kv">
+            <strong>Username</strong>
+            <span>{{ target_user.username }}</span>
+          </div>
+          <div class="profile-kv">
+            <strong>Email</strong>
+            <span><a href="mailto:{{ target_user.email }}" class="link-primary">{{ target_user.email }}</a></span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="profile-kv">
+            <strong>Role</strong>
+            <span class="chip-soft text-capitalize"><i class="cil-badge me-1"></i>{{ target_user.role }}</span>
+          </div>
+          <div class="profile-kv">
+            <strong>Registered</strong>
+            <span>{{ target_user.created_at.strftime('%Y-%m-%d %H:%M') if target_user.created_at else 'Unknown' }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if target_user.id != current_user.id %}
+      <hr class="my-4" style="border-color: rgba(100,116,139,0.2);">
+      <div class="d-flex gap-2">
+        <form method="POST" action="{{ url_for('auth.admin_toggle_role', user_id=target_user.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-warning btn-sm">
+            <i class="cil-swap-horizontal me-1"></i>
+            {% if target_user.role == 'user' %}Promote to Admin{% else %}Demote to User{% endif %}
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('auth.admin_delete_user', user_id=target_user.id) }}" onsubmit="return confirm('Delete user {{ target_user.username }}? This removes ALL their threat models and data permanently.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-sm">
+            <i class="cil-trash me-1"></i>Delete Account
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- User's Threat Models -->
+  <div class="card border-0 shadow-sm reveal-item" style="--reveal-delay: 50ms;">
+    <div class="card-header">
+      <div class="d-flex align-items-center justify-content-between">
+        <h5 class="mb-0"><i class="cil-shield-alt me-2"></i>Threat Models</h5>
+        <span class="badge bg-primary">{{ models|length }}</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      {% if models %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 app-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">#</th>
+              <th>Name</th>
+              <th>Methodology</th>
+              <th>Status</th>
+              <th>Threats</th>
+              <th>Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for model in models %}
+            <tr>
+              <td><code class="text-primary">{{ model.id }}</code></td>
+              <td class="fw-semibold">{{ model.name }}</td>
+              <td>
+                <span class="methodology-badge methodology-{% if model.methodology == 'PASTA' %}pasta{% elif model.methodology == 'DREAD' %}dread{% else %}stride{% endif %}" style="padding: 0.3rem 0.7rem; font-size: 0.75rem;">
+                  {{ model.methodology }}
+                </span>
+              </td>
+              <td><span class="chip-soft">{{ model.status }}</span></td>
+              <td><span class="badge bg-info">{{ model.threats|length }}</span></td>
+              <td><small class="text-medium-emphasis">{{ model.created_at.strftime('%Y-%m-%d') if model.created_at else '-' }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="cil-inbox fs-1 d-block mb-3 text-medium-emphasis"></i>
+        <p class="text-medium-emphasis mb-0">This user hasn't created any threat models yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+  document.addEventListener('DOMContentLoaded', function() {
+    document.body.classList.add('is-ready');
+  });
+</script>
+{% endblock %}

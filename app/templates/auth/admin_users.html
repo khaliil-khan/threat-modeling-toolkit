@@ -23,7 +23,9 @@
               <th>Username</th>
               <th>Email</th>
               <th style="width: 100px;">Role</th>
+              <th>Models</th>
               <th style="width: 160px;">Created</th>
+              <th style="width: 180px;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -33,7 +35,27 @@
               <td class="fw-semibold">{{ user.username }}</td>
               <td><a href="mailto:{{ user.email }}" class="link-primary">{{ user.email }}</a></td>
               <td><span class="chip-soft text-capitalize"><i class="cil-badge me-1"></i>{{ user.role }}</span></td>
+              <td><span class="badge bg-info">{{ user.threat_models|length }}</span></td>
               <td><small class="text-medium-emphasis">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</small></td>
+              <td>
+                <a href="{{ url_for('auth.admin_user_detail', user_id=user.id) }}" class="btn btn-sm btn-outline-info" title="View details">
+                  <i class="cil-magnifying-glass"></i>
+                </a>
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('auth.admin_toggle_role', user_id=user.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-warning" title="Toggle role">
+                    <i class="cil-swap-horizontal"></i>
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('auth.admin_delete_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('Delete user {{ user.username }}? This removes ALL their data.')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete user">
+                    <i class="cil-trash"></i>
+                  </button>
+                </form>
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>
