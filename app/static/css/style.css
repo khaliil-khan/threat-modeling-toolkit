@@ -962,3 +962,29 @@ body.is-ready .reveal-item {
   border-radius: var(--radius-md);
   border: 1px solid var(--border-primary);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COREUI OVERRIDES - Force dark theme everywhere
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.bg-light {
+  background: var(--bg-base) !important;
+}
+
+.bg-white {
+  background: var(--bg-surface) !important;
+}
+
+.wrapper {
+  background: var(--bg-base) !important;
+}
+
+.body {
+  background: var(--bg-base) !important;
+}
+
+/* Ensure container backgrounds are dark */
+.container-lg,
+.container-fluid {
+  background: transparent;
+}
