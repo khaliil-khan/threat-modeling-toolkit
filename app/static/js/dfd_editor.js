@@ -22,6 +22,16 @@
   let connectPreview = null;
   let idCounter = 1;
 
+  // Resize state
+  let resizing = false;
+  let resizeHandle = null; // 'nw','n','ne','e','se','s','sw','w'
+  let resizeStartX = 0;
+  let resizeStartY = 0;
+  let resizeOriginal = null; // {x, y, w, h}
+
+  const HANDLE_SIZE = 8;
+  const MIN_ELEMENT_SIZE = 40;
+
   // Undo/Redo
   let undoStack = [];
   let redoStack = [];
@@ -138,11 +148,47 @@
     return null;
   }
 
+  // Check if mouse is over a resize handle of the selected element
+  function hitTestHandle(x, y) {
+    if (!selectedId || selectedId.startsWith('conn_')) return null;
+    var el = getElementById(selectedId);
+    if (!el) return null;
+
+    var hs = HANDLE_SIZE;
+    var handles = {
+      'nw': { cx: el.x, cy: el.y },
+      'n':  { cx: el.x + el.w / 2, cy: el.y },
+      'ne': { cx: el.x + el.w, cy: el.y },
+      'e':  { cx: el.x + el.w, cy: el.y + el.h / 2 },
+      'se': { cx: el.x + el.w, cy: el.y + el.h },
+      's':  { cx: el.x + el.w / 2, cy: el.y + el.h },
+      'sw': { cx: el.x, cy: el.y + el.h },
+      'w':  { cx: el.x, cy: el.y + el.h / 2 }
+    };
+
+    for (var key in handles) {
+      var h = handles[key];
+      if (Math.abs(x - h.cx) <= hs && Math.abs(y - h.cy) <= hs) {
+        return key;
+      }
+    }
+    return null;
+  }
+
+  function getResizeCursor(handle) {
+    var cursors = {
+      'nw': 'nw-resize', 'n': 'n-resize', 'ne': 'ne-resize',
+      'e': 'e-resize', 'se': 'se-resize', 's': 's-resize',
+      'sw': 'sw-resize', 'w': 'w-resize'
+    };
+    return cursors[handle] || 'default';
+  }
+
   function onMouseDown(e) {
     const pos = getMousePos(e);
-    const hit = hitTest(pos.x, pos.y);
 
     if (connecting) {
+      const hit = hitTest(pos.x, pos.y);
       if (hit && hit.id !== connectFromId) {
         // Complete connection
         saveState();
@@ -160,6 +206,21 @@
       return;
     }
 
+    // Check resize handles first (only if something is selected)
+    var handle = hitTestHandle(pos.x, pos.y);
+    if (handle) {
+      var el = getElementById(selectedId);
+      resizing = true;
+      resizeHandle = handle;
+      resizeStartX = pos.x;
+      resizeStartY = pos.y;
+      resizeOriginal = { x: el.x, y: el.y, w: el.w, h: el.h };
+      saveState();
+      canvas.style.cursor = getResizeCursor(handle);
+      return;
+    }
+
+    const hit = hitTest(pos.x, pos.y);
     if (hit) {
       selectedId = hit.id;
       dragging = true;
@@ -186,6 +247,55 @@
       return;
     }
 
+    // Handle resizing
+    if (resizing && resizeHandle && selectedId) {
+      var el = getElementById(selectedId);
+      if (!el) return;
+
+      var dx = pos.x - resizeStartX;
+      var dy = pos.y - resizeStartY;
+      var o = resizeOriginal;
+
+      switch (resizeHandle) {
+        case 'se':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w + dx));
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h + dy));
+          break;
+        case 'e':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w + dx));
+          break;
+        case 's':
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h + dy));
+          break;
+        case 'nw':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w - dx));
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h - dy));
+          el.x = snap(o.x + o.w - el.w);
+          el.y = snap(o.y + o.h - el.h);
+          break;
+        case 'n':
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h - dy));
+          el.y = snap(o.y + o.h - el.h);
+          break;
+        case 'ne':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w + dx));
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h - dy));
+          el.y = snap(o.y + o.h - el.h);
+          break;
+        case 'sw':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w - dx));
+          el.h = Math.max(MIN_ELEMENT_SIZE, snap(o.h + dy));
+          el.x = snap(o.x + o.w - el.w);
+          break;
+        case 'w':
+          el.w = Math.max(MIN_ELEMENT_SIZE, snap(o.w - dx));
+          el.x = snap(o.x + o.w - el.w);
+          break;
+      }
+      drawAll();
+      return;
+    }
+
     if (dragging && selectedId) {
       const el = getElementById(selectedId);
       if (el) {
@@ -197,13 +307,26 @@
         drawAll();
       }
     } else {
-      // Hover cursor
-      const hit = hitTest(pos.x, pos.y);
-      canvas.style.cursor = hit ? 'grab' : 'default';
+      // Hover cursor — check handles first
+      var handle = hitTestHandle(pos.x, pos.y);
+      if (handle) {
+        canvas.style.cursor = getResizeCursor(handle);
+      } else {
+        const hit = hitTest(pos.x, pos.y);
+        canvas.style.cursor = hit ? 'grab' : 'default';
+      }
     }
   }
 
   function onMouseUp(e) {
+    if (resizing) {
+      resizing = false;
+      resizeHandle = null;
+      resizeOriginal = null;
+      canvas.style.cursor = 'default';
+      drawAll();
+      return;
+    }
     if (dragging) {
       saveState();
       dragging = false;
@@ -321,6 +444,37 @@
 
     // Draw elements (except trust boundaries)
     elements.filter(function (el) { return el.type !== 'trustBoundary'; }).forEach(drawElement);
+
+    // Draw resize handles on selected element
+    drawResizeHandles();
+  }
+
+  function drawResizeHandles() {
+    if (!selectedId || selectedId.startsWith('conn_')) return;
+    var el = getElementById(selectedId);
+    if (!el) return;
+
+    var hs = HANDLE_SIZE;
+    var handles = [
+      { x: el.x, y: el.y },                         // nw
+      { x: el.x + el.w / 2, y: el.y },              // n
+      { x: el.x + el.w, y: el.y },                  // ne
+      { x: el.x + el.w, y: el.y + el.h / 2 },      // e
+      { x: el.x + el.w, y: el.y + el.h },           // se
+      { x: el.x + el.w / 2, y: el.y + el.h },      // s
+      { x: el.x, y: el.y + el.h },                  // sw
+      { x: el.x, y: el.y + el.h / 2 }              // w
+    ];
+
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = COLORS.selected;
+    ctx.lineWidth = 1.5;
+
+    for (var i = 0; i < handles.length; i++) {
+      var h = handles[i];
+      ctx.fillRect(h.x - hs / 2, h.y - hs / 2, hs, hs);
+      ctx.strokeRect(h.x - hs / 2, h.y - hs / 2, hs, hs);
+    }
   }
 
   function drawGrid() {
